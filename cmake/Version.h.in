@@ -1,0 +1,4 @@
+#pragma once
+
+#define VERSION_MAJOR @CppExceptions_VERSION_MAJOR@
+#define VERSION_MINOR @CppExceptions_VERSION_MINOR@
