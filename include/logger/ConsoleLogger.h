@@ -14,7 +14,7 @@ namespace Logger
         public:
             static std::shared_ptr<ConsoleLogger> getInstance();
             
-            ~ConsoleLogger() = default;
+            ~ConsoleLogger() override = default;
             
             void print(const std::string &message) override;
         

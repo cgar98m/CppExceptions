@@ -14,7 +14,7 @@ namespace Logger
     {
         public:
             ILogger() = default;
-            ~ILogger() = default;
+            virtual ~ILogger() = default;
 
             virtual void print(const std::string &message) = 0;
 

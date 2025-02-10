@@ -2,14 +2,16 @@
 cmake_minimum_required(VERSION 3.31)
 
 # Configuramos el nombre del proyecto y su versión
-project(CppExceptions VERSION 0.1)
+project(CppExceptions VERSION 0.2)
 configure_file(${PROJECT_SOURCE_DIR}/cmake/Version.h.in ${PROJECT_SOURCE_DIR}/include/Version.h)
 
 # Creamos el ejecutable
 add_executable(CppExceptions
     "${PROJECT_SOURCE_DIR}/src/main.cpp"
     "${PROJECT_SOURCE_DIR}/src/logger/ConsoleLogger.cpp"
-    "${PROJECT_SOURCE_DIR}/src/logger/ILogger.cpp")
+    "${PROJECT_SOURCE_DIR}/src/logger/ILogger.cpp"
+    "${PROJECT_SOURCE_DIR}/src/parser/NamedArgumentParser.cpp"
+    "${PROJECT_SOURCE_DIR}/src/parser/ParsedArgument.cpp")
 
 # Establecemos el estándar de C++
 set(CMAKE_CXX_STANDARD 14)
