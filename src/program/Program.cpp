@@ -18,7 +18,7 @@ namespace Program
 
     const Main::ArgList Main::m_argList =
     {
-        { Parser::INTEGER_ARGUMENT, "ErrorTest" }
+        { { Parser::INTEGER_ARGUMENT, "ErrorTest" }, false }
     };
 
     Main::Main()
@@ -144,12 +144,23 @@ namespace Program
         {
             switch (l_intArg->value())
             {
+                case 0:
+                    break;
+
                 case 1:
                     m_workMode = WorkMode::THROW_CCP_EXCEPTION;
                     return true;
 
                 case 2:
                     m_workMode = WorkMode::THROW_SEH_EXCEPTION;
+                    return true;
+
+                case 3:
+                    m_workMode = WorkMode::THROW_THREADED_CPP_EXCEPTION;
+                    return true;
+
+                case 4:
+                    m_workMode = WorkMode::THROW_THREADED_SEH_EXCEPTION;
                     return true;
 
                 default:
@@ -164,20 +175,44 @@ namespace Program
     // Logica del programa
     int Main::work()
     {
-        // Modo valido?
-        if (m_workMode == WorkMode::UNDEFINED) return 1;
-
         LOGGER_LOG(m_logger) << "Inicio de la ejecucion";
 
-        // Forzamos el lanzamiento de una excepcion
-        if (m_workMode == WorkMode::THROW_CCP_EXCEPTION)
+        // Gestionamos el modo de trabajo
+        switch (m_workMode)
         {
-            throw std::runtime_error("C++ Exception");
-        }
-        else
-        {
-            int *p = nullptr;
-            *p = 20;
+            case WorkMode::UNDEFINED:
+            {
+                break;
+            }
+            
+            case WorkMode::THROW_CCP_EXCEPTION:
+            {
+                throw std::runtime_error("C++ Exception");
+                break;
+            }
+            
+            case WorkMode::THROW_SEH_EXCEPTION:
+            {
+                int *p = nullptr;
+                *p = 20;
+                break;
+            }
+            
+            case WorkMode::THROW_THREADED_CPP_EXCEPTION:
+            {
+                Error::CppExceptionThread l_cppExThread;
+                l_cppExThread.run();
+                Sleep(1000);
+                break;
+            }
+            
+            case WorkMode::THROW_THREADED_SEH_EXCEPTION:
+            {
+                Error::SehExceptionThread l_sehExThread;
+                l_sehExThread.run();
+                Sleep(2000);
+                break;
+            }
         }
         
         LOGGER_LOG(m_logger) << "Fin de la ejecucion";
@@ -189,10 +224,12 @@ namespace Program
     {
         switch (workMode)
         {
-            case WorkMode::UNDEFINED:           return "Sin definir";
-            case WorkMode::THROW_CCP_EXCEPTION: return "Lanzamiento de excepcion C++";
-            case WorkMode::THROW_SEH_EXCEPTION: return "Lanzamiento de excepcion SEH";
-            default:                            return "N/A";
+            case WorkMode::UNDEFINED:                    return "Sin definir";
+            case WorkMode::THROW_CCP_EXCEPTION:          return "Lanzamiento de excepcion C++";
+            case WorkMode::THROW_SEH_EXCEPTION:          return "Lanzamiento de excepcion SEH";
+            case WorkMode::THROW_THREADED_CPP_EXCEPTION: return "Lanzamiento de excepcion C++ en un thread";
+            case WorkMode::THROW_THREADED_SEH_EXCEPTION: return "Lanzamiento de excepcion SEH en un thread";
+            default:                                     return "N/A";
         }
     }
 };

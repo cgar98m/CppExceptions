@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.31)
 
 # Configuramos el nombre del proyecto y su versión
-project(CppExceptions VERSION 0.2)
+project(CppExceptions VERSION 0.4)
 configure_file(${PROJECT_SOURCE_DIR}/cmake/Version.h.in ${PROJECT_SOURCE_DIR}/include/Version.h)
 
 # Creamos el ejecutable

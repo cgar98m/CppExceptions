@@ -31,7 +31,9 @@ namespace Program
             {
                 UNDEFINED = 0,
                 THROW_CCP_EXCEPTION,
-                THROW_SEH_EXCEPTION
+                THROW_SEH_EXCEPTION,
+                THROW_THREADED_CPP_EXCEPTION,
+                THROW_THREADED_SEH_EXCEPTION
             };
 
             using ArgList  = std::vector<RequiredArgument>;
