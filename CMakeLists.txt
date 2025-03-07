@@ -13,7 +13,8 @@ add_executable(CppExceptions
     "${PROJECT_SOURCE_DIR}/src/logger/ILogger.cpp"
     "${PROJECT_SOURCE_DIR}/src/parser/NamedArgumentParser.cpp"
     "${PROJECT_SOURCE_DIR}/src/parser/ParsedArgument.cpp"
-    "${PROJECT_SOURCE_DIR}/src/program/Program.cpp")
+    "${PROJECT_SOURCE_DIR}/src/utils/Program.cpp"
+    "${PROJECT_SOURCE_DIR}/src/utils/Thread.cpp")
 
 # Establecemos el estándar de C++
 set(CMAKE_CXX_STANDARD 14)

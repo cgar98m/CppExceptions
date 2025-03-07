@@ -1,97 +1,77 @@
 #pragma once
 
 #include <windows.h>
-
 #include <exception>
 #include <memory>
 #include <mutex>
 #include <string>
+#include "error/Types.h"
+#include "utils/Thread.h"
 
 namespace Error
 {
     // Manejo de excepciones
     class ExceptionManager
     {
+        private:
+            const LPTOP_LEVEL_EXCEPTION_FILTER topExceptionHandler = nullptr;
+            const std::terminate_handler       topTerminateHandler = nullptr;
+
         public:
-            static LONG WINAPI manageMsvcException(PEXCEPTION_POINTERS exception);
+            ExceptionManager() = delete;
+            explicit ExceptionManager(bool isGlobal = false);
+            ExceptionManager& operator=(const ExceptionManager&) = delete;
+            virtual ~ExceptionManager();
+
+            static LONG WINAPI manageUnhandledException(PEXCEPTION_POINTERS exception);
             static void manageTerminate();
         
         private:
             static LONG manageException(PEXCEPTION_POINTERS exception);
             static LONG manageCriticalMsvcException(PEXCEPTION_POINTERS exception);
     };
-
-    // Wrapper de un thread que captura excepciones
-    class SafeThread
+    
+    // Thread con proteccion de excepciones
+    class SafeThread: public Utils::Thread
     {
         public:
-            static const DWORD TIMEOUT_MS_STOP_WAIT;
-            static const DWORD TIMEOUT_MS_LOOP_WAIT;
-            
-            struct Params
-            {
-                int                          iThreadPriority    = THREAD_PRIORITY_NORMAL;
-                DWORD                        dwMaxStopMsTimeout = SafeThread::TIMEOUT_MS_STOP_WAIT;
-                DWORD                        dwLoopWaitTimeout  = SafeThread::TIMEOUT_MS_LOOP_WAIT;
-                LPTOP_LEVEL_EXCEPTION_FILTER exceptionHandler   = nullptr;
-                std::terminate_handler       terminateHandler   = nullptr;
-            };
+            SafeThread();
+            SafeThread(const SafeThread&) = delete;
+            SafeThread& operator=(const SafeThread&) = delete;
+            virtual ~SafeThread() = default;
 
-        private:
-            static const DWORD THREAD_EXIT_CODE_EXCEPTION;
-            static const DWORD THREAD_EXIT_CODE_TERMINATE;
-            
-            Params m_params;
-
-            std::recursive_mutex m_threadMux;
-            HANDLE m_thread     = nullptr;
-            DWORD  m_dwThreadId = 0;
-            bool   m_bRunning   = false;
+            virtual Error::ExitCode workerWrapper() final;
 
         protected:
-            static const DWORD THREAD_EXIT_CODE_OK;
-            static const DWORD THREAD_EXIT_CODE_KO;
-
-        public:
-            explicit SafeThread(const Params& params);
-            virtual ~SafeThread();
-
-            bool run();
-            bool stop();
+            virtual Error::ExitCode worker();
         
-            static DWORD __stdcall wrapperThread(LPVOID param);
-            
         private:
-            DWORD configureThread();
-            DWORD protectedThread();
-            DWORD loopThread();
-
-        protected:
-            virtual DWORD workingThread();
+            Error::ExitCode intermidiateWorker();
     };
 
-    // Clase para generar excepciones C++ en un thread
+    // Thread que genera excepciones C++
     class CppExceptionThread: public SafeThread
     {
-        private:
-            static const std::string EXCEPTION_MSG;
-
         public:
-            CppExceptionThread();
-            virtual ~CppExceptionThread();
-        
+            CppExceptionThread() = default;
+            CppExceptionThread(const CppExceptionThread&) = delete;
+            CppExceptionThread& operator=(const CppExceptionThread&) = delete;
+            virtual ~CppExceptionThread() = default;
+
         private:
-            DWORD workingThread() override;
+            Error::ExitCode worker() final;
     };
 
-    // Clase para generar excepciones SEH en un thread
+    // Thread que genera excepciones SEH
     class SehExceptionThread: public SafeThread
     { 
         public:
-            SehExceptionThread();
-            virtual ~SehExceptionThread();
+            SehExceptionThread() = default;
+            SehExceptionThread(const SehExceptionThread&) = delete;
+            SehExceptionThread& operator=(const SehExceptionThread&) = delete;
+            virtual ~SehExceptionThread() = default;
         
         private:
-            DWORD workingThread() override;
+            Error::ExitCode worker() final;
     };
 };

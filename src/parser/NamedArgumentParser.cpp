@@ -1,7 +1,6 @@
 #include "parser/NamedArgumentParser.h"
 
 #include <windows.h>
-
 #include <algorithm>
 #include <stdexcept>
 
@@ -11,54 +10,55 @@ namespace Parser
     // NamedArgumentParser  //
     //////////////////////////
 
-    NamedArgumentParser::NamedArgumentParser(const ArgumentHeaders& valid_args)
-        : validArguments(valid_args)
+    NamedArgumentParser::NamedArgumentParser(const ArgumentHeaders& validArgs)
+        : validArgs(validArgs)
     {
     }
     
-    void NamedArgumentParser::feed(int total_args, char **args)
+    void NamedArgumentParser::feed(int totalArgs, char **args)
     {
+        std::lock_guard<std::mutex> lock(argMutex);
+
         // Limpiamos casos previos
-        parsedArguments.clear();
+        parsedArgs.clear();
 
         // Hay argumentos por analizar?
-        if (!total_args || !args) return;
+        if (!totalArgs || !args) return;
 
         // Analizamos los argumentos
-        int l_idx = -1;
-        while (++l_idx < total_args)
+        int idx = -1;
+        while (++idx < totalArgs)
         {
-            if (!args[l_idx]) continue;
+            if (!args[idx]) continue;
 
             // Coincide con alguna cabecera?
-            std::string l_sArg(args[l_idx]);
-            auto l_it = std::find_if(validArguments.begin(), validArguments.end(),
-                [l_sArg](const auto& validArg) -> bool
-                { return l_sArg.compare(validArg.argName) == 0; });
-            if (l_it == validArguments.end()) continue;
+            std::string argName(args[idx]);
+            auto itArg = std::find_if(validArgs.begin(), validArgs.end(),
+                [argName](const auto& validArg) -> bool
+                { return argName.compare(validArg.argName) == 0; });
+            if (itArg == validArgs.end()) continue;
 
             // Es un argumento unico?
-            if (l_it->argType == SOLO_ARGUMENT)
+            if (itArg->argType == SOLO_ARGUMENT)
             {
-                ArgumentValue l_argValue = std::make_shared<SoloArgumentValue>();
-                parsedArguments[*l_it]   = l_argValue;
+                parsedArgs[*itArg] = std::make_shared<SoloArgumentValue>();
                 continue;
             }
 
             // Existe el valor de argumento?
-            if (++l_idx >= total_args) continue;
-            if (!args[l_idx]) continue;
+            if (++idx >= totalArgs) continue;
+            if (!args[idx]) continue;
 
             // Analizamos el valor
-            ArgumentValue l_argValue;
-            std::string   l_sValue(args[l_idx]);
-            switch (l_it->argType)
+            ArgumentValue argValue;
+            std::string   stringValue(args[idx]);
+            switch (itArg->argType)
             {
                 case INTEGER_ARGUMENT:
                     try
                     {
-                        int l_iValue = std::stoi(l_sValue);
-                        l_argValue   = std::make_shared<IntArgumentValue>(l_iValue);
+                        int intValue = std::stoi(stringValue);
+                        argValue     = std::make_shared<IntArgumentValue>(intValue);
                     }
                     catch (const std::invalid_argument &e)
                     {
@@ -69,7 +69,7 @@ namespace Parser
                     break;
                 
                 case STRING_ARGUMENT:
-                    l_argValue = std::make_shared<StringArgumentValue>(l_sValue);
+                    argValue = std::make_shared<StringArgumentValue>(stringValue);
                     break;
                 
                 default:
@@ -77,27 +77,27 @@ namespace Parser
             }
 
             // Se trata de un argumento valido?
-            if (!l_argValue)
+            if (!argValue)
             {
-                --l_idx;
+                --idx;
                 continue;
             }
 
             // Agregamos el argumento
-            parsedArguments[*l_it] = l_argValue;
+            parsedArgs[*itArg] = argValue;
         }
     }
 
     NamedArgumentParser::ArgumentValue NamedArgumentParser::getValue(const ArgumentHeader& arg_header)
     {
-        ArgumentValue value;
+        std::lock_guard<std::mutex> lock(argMutex);
 
-        auto l_itArg = std::find_if(parsedArguments.begin(), parsedArguments.end(),
+        auto itArg = std::find_if(parsedArgs.begin(), parsedArgs.end(),
             [arg_header](const ArgumentPair& arg)
             { return arg.first == arg_header; } );
-        if (l_itArg == parsedArguments.end()) return value;
+        if (itArg == parsedArgs.end()) return ArgumentValue();
 
-        return l_itArg->second;
+        return itArg->second;
     }
     
     bool operator<(const NamedArgumentParser::ArgumentHeader& lhs, const NamedArgumentParser::ArgumentHeader& rhs)

@@ -3,28 +3,20 @@
 #include "logger/ILogger.h"
 
 #include <windows.h>
-
 #include <exception>
 #include <functional>
-
 #include "parser/NamedArgumentParser.h"
 
-namespace Program
+namespace Utils
 {
     // Wrapper del programa principal
     class Main
     {
-        public:
-            Main();
-            ~Main();
-
-            int run(int argc, char **argv);
-        
         private:
             struct RequiredArgument
             {
                 Parser::NamedArgumentParser::ArgumentHeader argument;
-                bool required;
+                bool                                        required;
             };
 
             enum class WorkMode : uint32_t
@@ -38,7 +30,21 @@ namespace Program
 
             using ArgList  = std::vector<RequiredArgument>;
             using ArgValue = Parser::NamedArgumentParser::ArgumentValue;
+            
+            std::shared_ptr<Logger::ILogger> logger;
+            WorkMode workMode;
+            
+            static const std::string ARG_ERROR_MODE;
 
+            static const ArgList ARG_LIST;
+
+        public:
+            Main();
+            virtual ~Main() = default;
+
+            int run(int argc, char **argv);
+        
+        private:
             // Previa a la ejecucion del programa
             void clear();
             void notifyVersion();
@@ -50,14 +56,5 @@ namespace Program
 
             // Utils
             std::string getWorkModeDescription(WorkMode workMode);
-            
-        private:
-            static const ArgList m_argList;
-
-            std::shared_ptr<Logger::ILogger> m_logger;
-            WorkMode m_workMode;
-
-            LPTOP_LEVEL_EXCEPTION_FILTER m_previousFilter;
-            std::terminate_handler       m_previousTerminate;
     };
 };

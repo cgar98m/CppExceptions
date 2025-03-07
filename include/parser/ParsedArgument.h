@@ -4,6 +4,7 @@
 
 namespace Parser
 {
+    // Tipos de argumentos
     enum ArgumentType
     {
         SOLO_ARGUMENT = 0,
@@ -14,14 +15,15 @@ namespace Parser
     // Interfaz del valor de un argumento
     class IArgumentValue
     {
+        private:
+            ArgumentType argType;
+
         public:
-            explicit IArgumentValue(ArgumentType arg_type);
+            IArgumentValue() = delete;
+            explicit IArgumentValue(ArgumentType argType);
             virtual ~IArgumentValue() = default;
 
             ArgumentType type() const;
-        
-        private:
-            ArgumentType argType;
     };
 
     // Valor de argumento sin valor
@@ -29,36 +31,36 @@ namespace Parser
     {
         public:
             SoloArgumentValue();
-            ~SoloArgumentValue() = default;
+            virtual ~SoloArgumentValue() = default;
     };
 
     // Valor de argumento numerico
     class IntArgumentValue: public IArgumentValue
     {
-        public:
-            IntArgumentValue();
-            explicit IntArgumentValue(int int_value);
-            ~IntArgumentValue() = default;
-        
-            int value(void) const;
-            void value(int int_value);
-
         private:
             int intValue;
+
+        public:
+            IntArgumentValue();
+            explicit IntArgumentValue(int intValue);
+            virtual ~IntArgumentValue() = default;
+        
+            int value(void) const;
+            void value(int newIntValue);
     };
 
     // Valor de argumento de texto
     class StringArgumentValue: public IArgumentValue
     {
-        public:
-            StringArgumentValue();
-            explicit StringArgumentValue(const std::string& string_value);
-            ~StringArgumentValue() = default;
-
-            std::string value(void) const;
-            void value(const std::string& string_value);
-        
         private:
             std::string stringValue;
+
+        public:
+            StringArgumentValue();
+            explicit StringArgumentValue(const std::string& stringValue);
+            virtual ~StringArgumentValue() = default;
+
+            std::string value(void) const;
+            void value(const std::string& newStringValue);
     };
 };

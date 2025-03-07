@@ -6,8 +6,8 @@ namespace Parser
     // IArgumentValue //
     ////////////////////
 
-    IArgumentValue::IArgumentValue(ArgumentType arg_type)
-        : argType(arg_type)
+    IArgumentValue::IArgumentValue(ArgumentType argType)
+        : argType(argType)
     {
     }
 
@@ -35,9 +35,9 @@ namespace Parser
     {
     }
 
-    IntArgumentValue::IntArgumentValue(int int_value)
+    IntArgumentValue::IntArgumentValue(int intValue)
         : IArgumentValue(INTEGER_ARGUMENT)
-        , intValue(int_value)
+        , intValue(intValue)
     {
     }
 
@@ -46,9 +46,9 @@ namespace Parser
         return intValue;
     }
 
-    void IntArgumentValue::value(int int_value)
+    void IntArgumentValue::value(int newIntValue)
     {
-        intValue = int_value;
+        intValue = newIntValue;
     }
 
     //////////////////////////
@@ -60,9 +60,9 @@ namespace Parser
     {
     }
 
-    StringArgumentValue::StringArgumentValue(const std::string& string_value)
+    StringArgumentValue::StringArgumentValue(const std::string& stringValue)
         : IArgumentValue(STRING_ARGUMENT)
-        , stringValue(string_value)
+        , stringValue(stringValue)
     {
     }
 
@@ -71,8 +71,8 @@ namespace Parser
         return stringValue;
     }
 
-    void StringArgumentValue::value(const std::string& string_value)
+    void StringArgumentValue::value(const std::string& newStringValue)
     {
-        stringValue = string_value;
+        stringValue = newStringValue;
     }
 };

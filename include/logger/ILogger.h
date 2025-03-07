@@ -2,6 +2,7 @@
 
 #include <ostream>
 #include <memory>
+#include <mutex>
 #include <sstream>
 #include <string>
 
@@ -14,38 +15,35 @@ namespace Logger
     {
         public:
             ILogger() = default;
+            ILogger(const ILogger&) = delete;
+            ILogger& operator=(const ILogger&) = delete;
             virtual ~ILogger() = default;
 
-            virtual void print(const std::string &message) = 0;
-
-        private:
-            ILogger& operator=(const ILogger&) = delete;
+            virtual void print(const std::string&) = 0;
     };
 
     // Entrada de log (NO es thread safe)
     class LogEntry
     {
+        private:
+            std::shared_ptr<ILogger> logger;
+            std::string              func;
+            std::string              file;
+            size_t                   line;
+            std::stringstream        sstream;
+
         public:
+            LogEntry() = delete;
             explicit LogEntry(const std::shared_ptr<ILogger> logger,
                               const std::string              &func = std::string(),
                               const std::string              &file = __FILE__,
                               size_t                         line  = __LINE__);
+            LogEntry& operator=(const LogEntry&) = delete;
             ~LogEntry();
 
             std::ostream& operator()();
 
         private:
-            LogEntry() = delete;
-            LogEntry& operator=(const LogEntry&) = delete;
-
             void flush();
-
-            // Variables
-            std::shared_ptr<ILogger> logger;
-            std::string              func;
-            std::string              file;
-            size_t                   line;
-
-            std::stringstream        sstream;
     };
 };
