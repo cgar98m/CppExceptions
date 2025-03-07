@@ -14,6 +14,9 @@ namespace Error
     class ExceptionManager
     {
         private:
+            static const std::string DUMP_DLL_NAME;
+            static const std::string DUMP_FUNC_MINIDUMP;
+
             const LPTOP_LEVEL_EXCEPTION_FILTER topExceptionHandler = nullptr;
             const std::terminate_handler       topTerminateHandler = nullptr;
 
@@ -29,6 +32,8 @@ namespace Error
         private:
             static LONG manageException(PEXCEPTION_POINTERS exception);
             static LONG manageCriticalMsvcException(PEXCEPTION_POINTERS exception);
+
+            static bool createDumpFile(PEXCEPTION_POINTERS exception);
     };
     
     // Thread con proteccion de excepciones
@@ -74,4 +79,6 @@ namespace Error
         private:
             Error::ExitCode worker() final;
     };
+
+    // 
 };

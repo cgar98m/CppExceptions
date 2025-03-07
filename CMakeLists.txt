@@ -13,6 +13,7 @@ add_executable(CppExceptions
     "${PROJECT_SOURCE_DIR}/src/logger/ILogger.cpp"
     "${PROJECT_SOURCE_DIR}/src/parser/NamedArgumentParser.cpp"
     "${PROJECT_SOURCE_DIR}/src/parser/ParsedArgument.cpp"
+    "${PROJECT_SOURCE_DIR}/src/utils/DllManager.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/Program.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/Thread.cpp")
 
@@ -26,3 +27,6 @@ message(STATUS "CXX_FLAGS: ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}"
 
 # Indicamos los ficheros a incluir
 target_include_directories(CppExceptions PUBLIC "${PROJECT_SOURCE_DIR}/include/")
+
+# Incluimos las librerias de dependencias
+target_link_libraries(CppExceptions PUBLIC dbghelp)

@@ -69,7 +69,7 @@ namespace Utils
 
     bool ThreadHolder::run()
     {
-        std::shared_ptr<Logger::ConsoleLogger> logger = Logger::ConsoleLogger::getInstance();
+        std::shared_ptr<Logger::ILogger> logger = Logger::ConsoleLogger::getInstance();
 
         std::lock_guard<std::recursive_mutex> lock(threadMux);
         if (thread.getHandle()) return true;
@@ -106,7 +106,7 @@ namespace Utils
 
     bool ThreadHolder::requestStop()
     {
-        std::shared_ptr<Logger::ConsoleLogger> logger = Logger::ConsoleLogger::getInstance();
+        std::shared_ptr<Logger::ILogger> logger = Logger::ConsoleLogger::getInstance();
 
         // Verificamos si existe hilo
         std::lock_guard<std::recursive_mutex> l_lock(threadMux);
@@ -122,7 +122,7 @@ namespace Utils
     
     Error::ExitCode ThreadHolder::waitStop()
     {
-        std::shared_ptr<Logger::ConsoleLogger> l_logger = Logger::ConsoleLogger::getInstance();
+        std::shared_ptr<Logger::ILogger> logger = Logger::ConsoleLogger::getInstance();
 
         // Verificamos si existe hilo
         std::lock_guard<std::recursive_mutex> l_lock(threadMux);
@@ -141,12 +141,12 @@ namespace Utils
                 break;
                 
             case WAIT_TIMEOUT:
-                LOGGER_LOG(l_logger) << "Timeout esperando finalizacion del hilo [" << threadId << "]. Forzando cerrado...";
+                LOGGER_LOG(logger) << "Timeout esperando finalizacion del hilo [" << threadId << "]. Forzando cerrado...";
                 break;
                 
             case WAIT_FAILED:
             default:
-                LOGGER_LOG(l_logger) << "Error finalizando el hilo [" << threadId << "]: " << GetLastError() << ". Forzando cerrado...";
+                LOGGER_LOG(logger) << "Error finalizando el hilo [" << threadId << "]: " << GetLastError() << ". Forzando cerrado...";
                 break;
         }
 
@@ -156,7 +156,7 @@ namespace Utils
         {
             if (!TerminateThread(threadHandle, static_cast<DWORD>(Error::ExitCode::EXIT_CODE_TERMINATE)))
             {
-                LOGGER_LOG(l_logger) << "Error forzando cierre de hilo [" << threadId << "]";
+                LOGGER_LOG(logger) << "Error forzando cierre de hilo [" << threadId << "]";
                 resultadoTerminate = false;
             }
         }
