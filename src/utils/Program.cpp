@@ -29,6 +29,9 @@ namespace Utils
 
     int Main::run(int argc, char **argv)
     {
+        // Instanciamos el gestor de errores
+        Error::ExceptionManager exceptionManager(true);
+        
         // Limpiamos el objeto
         clear();
 

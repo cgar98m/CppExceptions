@@ -3,9 +3,6 @@
 
 int main(int argc, char **argv)
 {
-    // Insranciamos el gestor de errores
-    Error::ExceptionManager exceptionManager(true);
-
     // Instanciamos el programa
     Utils::Main program;
 
