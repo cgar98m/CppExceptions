@@ -10,10 +10,10 @@ namespace Logger
     // LogEntry //
     //////////////
 
-    LogEntry::LogEntry(const std::shared_ptr<ILogger> logger,
-                       const std::string              &func,
-                       const std::string              &file,
-                       size_t                         line)
+    LogEntry::LogEntry(const Logger      &logger,
+                       const std::string &func,
+                       const std::string &file,
+                       size_t            line)
         : logger(logger)
         , func(func)
         , file(file)
@@ -67,5 +67,19 @@ namespace Logger
 
         // Pintamos el mensaje
         logger->print(ssMessage.str());
+    }
+
+    ////////////////////////////////////////////////
+    // Interfaz de una clase que tiene un logger  //
+    ////////////////////////////////////////////////
+
+    ILoggerHolder::ILoggerHolder(const Logger& logger)
+        : logger(logger)
+    {
+    }
+
+    const Logger& ILoggerHolder::getLogger() const
+    {
+        return logger;
     }
 };

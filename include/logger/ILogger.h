@@ -7,6 +7,7 @@
 #include <string>
 
 #define LOGGER_LOG(logger) Logger::LogEntry((logger), (__func__), __FILE__, __LINE__)()
+#define LOGGER_THIS_LOG() LOGGER_LOG(getLogger())
 
 namespace Logger
 {
@@ -21,23 +22,24 @@ namespace Logger
 
             virtual void print(const std::string&) = 0;
     };
+    using Logger = std::shared_ptr<ILogger>;
 
     // Entrada de log (NO es thread safe)
     class LogEntry
     {
         private:
-            std::shared_ptr<ILogger> logger;
-            std::string              func;
-            std::string              file;
-            size_t                   line;
-            std::stringstream        sstream;
+            Logger            logger;
+            std::string       func;
+            std::string       file;
+            size_t            line;
+            std::stringstream sstream;
 
         public:
             LogEntry() = delete;
-            explicit LogEntry(const std::shared_ptr<ILogger> logger,
-                              const std::string              &func = std::string(),
-                              const std::string              &file = __FILE__,
-                              size_t                         line  = __LINE__);
+            explicit LogEntry(const Logger      &logger,
+                              const std::string &func = std::string(),
+                              const std::string &file = __FILE__,
+                              size_t            line  = __LINE__);
             LogEntry& operator=(const LogEntry&) = delete;
             ~LogEntry();
 
@@ -45,5 +47,21 @@ namespace Logger
 
         private:
             void flush();
+    };
+
+    // Interfaz de una clase que tiene un logger
+    class ILoggerHolder
+    {
+        private:
+            Logger logger;
+
+        public:
+            ILoggerHolder() = delete;
+            explicit ILoggerHolder(const Logger& logger);
+            ILoggerHolder& operator=(const Logger& logger) = delete;
+            virtual ~ILoggerHolder() = default;
+
+        protected:
+            virtual const Logger& getLogger() const;
     };
 };

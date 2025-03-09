@@ -1,16 +1,15 @@
 #pragma once
 
-#include "logger/ILogger.h"
-
 #include <windows.h>
 #include <exception>
 #include <functional>
+#include "logger/ConsoleLogger.h"
 #include "parser/NamedArgumentParser.h"
 
 namespace Utils
 {
     // Wrapper del programa principal
-    class Main
+    class Main: public Logger::ILoggerHolder
     {
         private:
             struct RequiredArgument
@@ -31,7 +30,6 @@ namespace Utils
             using ArgList  = std::vector<RequiredArgument>;
             using ArgValue = Parser::NamedArgumentParser::ArgumentValue;
             
-            std::shared_ptr<Logger::ILogger> logger;
             WorkMode workMode;
             
             static const std::string ARG_ERROR_MODE;
@@ -39,7 +37,9 @@ namespace Utils
             static const ArgList ARG_LIST;
 
         public:
-            Main();
+            explicit Main(const Logger::Logger& logger = Logger::ConsoleLogger::getInstance());
+            Main(const Main&) = delete;
+            Main& operator=(const Main&) = delete;
             virtual ~Main() = default;
 
             int run(int argc, char **argv);

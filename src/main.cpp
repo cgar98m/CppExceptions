@@ -1,4 +1,5 @@
 #include "error/Exception.h"
+#include "logger/ConsoleLogger.h"
 #include "utils/Program.h"
 
 int main(int argc, char **argv)

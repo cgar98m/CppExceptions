@@ -4,9 +4,8 @@
 #include <algorithm>
 #include <iomanip>
 #include <stdexcept>
-#include "error/Exception.h"
-#include "logger/ConsoleLogger.h"
 #include "Version.h"
+#include "error/Exception.h"
 
 namespace Utils
 {
@@ -21,8 +20,8 @@ namespace Utils
         { { Parser::INTEGER_ARGUMENT, Main::ARG_ERROR_MODE }, false }
     };
 
-    Main::Main()
-        : logger(Logger::ConsoleLogger::getInstance())
+    Main::Main(const Logger::Logger& logger)
+        : ILoggerHolder(logger)
         , workMode(WorkMode::UNDEFINED)
     {
     }
@@ -30,7 +29,7 @@ namespace Utils
     int Main::run(int argc, char **argv)
     {
         // Instanciamos el gestor de errores
-        Error::ExceptionManager exceptionManager(true);
+        Error::ExceptionManager exceptionManager(true, getLogger());
         
         // Limpiamos el objeto
         clear();
@@ -54,9 +53,9 @@ namespace Utils
     void Main::notifyVersion()
     {
         // Mostramos la versión
-        LOGGER_LOG(logger) << "VERSION: "
-                           << std::setfill('0') << std::setw(2) << VERSION_MAJOR << "."
-                           << std::setfill('0') << std::setw(2) << VERSION_MINOR;
+        LOGGER_THIS_LOG() << "VERSION: "
+                          << std::setfill('0') << std::setw(2) << VERSION_MAJOR << "."
+                          << std::setfill('0') << std::setw(2) << VERSION_MINOR;
     }
 
     void Main::parseArguments(int argc, char **argv)
@@ -79,7 +78,7 @@ namespace Utils
             ArgValue argValue = argParser.getValue(itArg->argument);
             if (!argValue)
             {
-                LOGGER_LOG(logger) << "Argumento " << itArg->argument.argName << ": NO identificado";
+                LOGGER_THIS_LOG() << "Argumento " << itArg->argument.argName << ": NO identificado";
                 if (itArg->required) requiredError = true;
                 continue;
             }
@@ -87,7 +86,7 @@ namespace Utils
             // Verificamos el tipo del argumento
             if (argValue->type() != itArg->argument.argType)
             {
-                LOGGER_LOG(logger) << "Argumento " << itArg->argument.argName << ": Tipo INVALIDO";
+                LOGGER_THIS_LOG() << "Argumento " << itArg->argument.argName << ": Tipo INVALIDO";
                 if (itArg->required) requiredError = true;
                 continue;
             }
@@ -100,7 +99,7 @@ namespace Utils
                 case Parser::INTEGER_ARGUMENT:
                     if (!dynamic_cast<Parser::IntArgumentValue*>(argValue.get()))
                     {
-                        LOGGER_LOG(logger) << "Argumento " << itArg->argument.argName << ": Tipo entero NO COHERENTE";
+                        LOGGER_THIS_LOG() << "Argumento " << itArg->argument.argName << ": Tipo entero NO COHERENTE";
                         if (itArg->required) requiredError = true;
                         continue;
                     }
@@ -109,7 +108,7 @@ namespace Utils
                 case Parser::STRING_ARGUMENT:
                     if (!dynamic_cast<Parser::StringArgumentValue*>(argValue.get()))
                     {
-                        LOGGER_LOG(logger) << "Argumento " << itArg->argument.argName << ": Tipo string NO COHERENTE";
+                        LOGGER_THIS_LOG() << "Argumento " << itArg->argument.argName << ": Tipo string NO COHERENTE";
                         if (itArg->required) requiredError = true;
                         continue;
                     }
@@ -126,7 +125,7 @@ namespace Utils
 
         // Notificamos el valor parseado
         if (requiredError) workMode = WorkMode::UNDEFINED;
-        LOGGER_LOG(logger) << "Modo de trabajo: " << static_cast<uint32_t>(workMode) << " - " << getWorkModeDescription(workMode);
+        LOGGER_THIS_LOG() << "Modo de trabajo: " << static_cast<uint32_t>(workMode) << " - " << getWorkModeDescription(workMode);
     }
 
     bool Main::analyzeArgument(std::string name, ArgValue argument)
@@ -160,7 +159,7 @@ namespace Utils
                         return true;
     
                     default:
-                        LOGGER_LOG(logger) << "Argumento " << name << ": Valor NO esperado";
+                        LOGGER_THIS_LOG() << "Argumento " << name << ": Valor NO esperado";
                         return false;
                 }
             }
@@ -172,7 +171,7 @@ namespace Utils
     // Logica del programa
     int Main::work()
     {
-        LOGGER_LOG(logger) << "Inicio de la ejecucion";
+        LOGGER_THIS_LOG() << "Inicio de la ejecucion";
 
         // Gestionamos el modo de trabajo
         switch (workMode)
@@ -198,7 +197,7 @@ namespace Utils
             case WorkMode::THROW_THREADED_CPP_EXCEPTION:
             {
                 Error::CppExceptionThread cppThread;
-                Utils::ThreadHolder       cppHolder(cppThread, Utils::ThreadHolder::Params());
+                Utils::ThreadHolder       cppHolder(cppThread, Utils::ThreadHolder::Params(), getLogger());
                 cppHolder.run();
                 Sleep(1000);
                 cppHolder.stop();
@@ -208,7 +207,7 @@ namespace Utils
             case WorkMode::THROW_THREADED_SEH_EXCEPTION:
             {
                 Error::SehExceptionThread sehThread;
-                Utils::ThreadHolder       sehHolder(sehThread, Utils::ThreadHolder::Params());
+                Utils::ThreadHolder       sehHolder(sehThread, Utils::ThreadHolder::Params(), getLogger());
                 sehHolder.run();
                 Sleep(1000);
                 sehHolder.stop();
@@ -216,7 +215,7 @@ namespace Utils
             }
         }
         
-        LOGGER_LOG(logger) << "Fin de la ejecucion";
+        LOGGER_THIS_LOG() << "Fin de la ejecucion";
         return 0;
     }
 

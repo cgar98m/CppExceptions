@@ -4,7 +4,6 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-#include "logger/ConsoleLogger.h"
 #include "utils/DllManager.h"
 
 namespace Error
@@ -33,10 +32,23 @@ namespace Error
     const std::string ExceptionManager::DUMP_DLL_NAME      = "dbghelp.dll";
     const std::string ExceptionManager::DUMP_FUNC_MINIDUMP = "MiniDumpWriteDump";
     
-    ExceptionManager::ExceptionManager(bool isGlobal)
+    Logger::Logger ExceptionManager::logger = Logger::ConsoleLogger::getInstance();
+    std::mutex     ExceptionManager::loggerMutex;
+
+    bool       ExceptionManager::firstException = true;
+    std::mutex ExceptionManager::firstExceptionMutex;
+
+    bool ExceptionManager::exceptionError = false;
+
+    ExceptionManager::ExceptionManager(bool isGlobal, const Logger::Logger& logger)
         : topTerminateHandler(std::set_terminate(manageTerminate))
         , topExceptionHandler(isGlobal ? SetUnhandledExceptionFilter(manageUnhandledException) : nullptr)
     {
+        if (isGlobal)
+        {
+            std::lock_guard<std::mutex> lock(loggerMutex);
+            this->logger = logger;
+        }
     }
 
     ExceptionManager::~ExceptionManager()
@@ -60,19 +72,39 @@ namespace Error
 
     void ExceptionManager::manageTerminate()
     {
-        std::shared_ptr<Logger::ILogger> logger = Logger::ConsoleLogger::getInstance();
-        LOGGER_LOG(logger) << "Terminate ejecutado";
+        Logger::Logger tmpLogger;
+        {
+            std::lock_guard<std::mutex> lock(loggerMutex);
+            tmpLogger = logger;
+        }
+        LOGGER_LOG(tmpLogger) << "Terminate ejecutado";
 
-        // Si se quiere esperar a que se cierre el programa adecuadamente, este es el punto de no retorno
-        std::abort();
+        if (exceptionError) std::abort();
+        std::exit(0);
     }
 
     LONG ExceptionManager::manageException(PEXCEPTION_POINTERS exception)
     {
-        std::shared_ptr<Logger::ILogger> logger = Logger::ConsoleLogger::getInstance();
-        LOGGER_LOG(logger) << "Excepcion detectada";
-        
-        if (!createDumpFile(exception, MiniDumpRequiredInfo())) LOGGER_LOG(logger) << "Error creando mini dump";
+        Logger::Logger tmpLogger;
+        {
+            std::lock_guard<std::mutex> lock(loggerMutex);
+            tmpLogger = logger;
+        }
+        LOGGER_LOG(tmpLogger) << "Excepcion detectada";
+     
+        // Verificamos si es la primera excepcion (ignoramos el resto)
+        {
+            std::lock_guard<std::mutex> lock(firstExceptionMutex);
+            if (!firstException)
+            {
+                LOGGER_LOG(tmpLogger) << "Excepcion descartada";
+                return EXCEPTION_EXECUTE_HANDLER;
+            }
+
+            firstException = false;
+        }
+
+        if (!createDumpFile(exception, MiniDumpRequiredInfo())) LOGGER_LOG(tmpLogger) << "Error creando mini dump";
         
         std::terminate();
         return EXCEPTION_EXECUTE_HANDLER;
@@ -80,8 +112,14 @@ namespace Error
 
     LONG ExceptionManager::manageCriticalMsvcException(PEXCEPTION_POINTERS exception)
     {
-        std::shared_ptr<Logger::ILogger> logger = Logger::ConsoleLogger::getInstance();
-        LOGGER_LOG(logger) << "Excepcion CRITICA detectada";
+        Logger::Logger tmpLogger;
+        {
+            std::lock_guard<std::mutex> lock(loggerMutex);
+            tmpLogger = logger;
+        }
+        LOGGER_LOG(tmpLogger) << "Excepcion CRITICA detectada";
+
+        exceptionError = true;
 
         std::terminate();
         return EXCEPTION_EXECUTE_HANDLER;
@@ -89,20 +127,24 @@ namespace Error
 
     bool ExceptionManager::createDumpFile(PEXCEPTION_POINTERS exception, const MiniDumpRequiredInfo& requiredInfo)
     {
-        std::shared_ptr<Logger::ILogger> logger = Logger::ConsoleLogger::getInstance();
+        Logger::Logger tmpLogger;
+        {
+            std::lock_guard<std::mutex> lock(loggerMutex);
+            tmpLogger = logger;
+        }
         
         // Verificamos los datos obtenidos
         if (!exception || !requiredInfo.isValid())
         {
-            LOGGER_LOG(logger) << "Informacion para mini dump incompleta";
+            LOGGER_LOG(tmpLogger) << "Informacion para mini dump incompleta";
             return false;
         }
 
         // Cargamos la DLL
-        std::shared_ptr<Utils::DllWrapper> dllWrapper = Utils::DllManager::getInstance(DUMP_DLL_NAME);
+        std::shared_ptr<Utils::DllWrapper> dllWrapper = Utils::DllManager::getInstance(DUMP_DLL_NAME, tmpLogger);
         if (!dllWrapper || !dllWrapper->isValid())
         {
-            LOGGER_LOG(logger) << "Error cargando libreria " << DUMP_DLL_NAME;
+            LOGGER_LOG(tmpLogger) << "Error cargando libreria " << DUMP_DLL_NAME;
             return false;
         }
 
@@ -110,14 +152,14 @@ namespace Error
         std::shared_ptr<Utils::DllFunctionWrapper> funcWrapper = dllWrapper->getFunction(DUMP_FUNC_MINIDUMP);
         if (!funcWrapper || !funcWrapper->isValid())
         {
-            LOGGER_LOG(logger) << "Error cargando funcion " << DUMP_FUNC_MINIDUMP;
+            LOGGER_LOG(tmpLogger) << "Error cargando funcion " << DUMP_FUNC_MINIDUMP;
             return false;
         }
 
         MiniDumpWriteDump funcAddress = reinterpret_cast<MiniDumpWriteDump>(funcWrapper->getAddress());
         if (!funcAddress)
         {
-            LOGGER_LOG(logger) << "Error traduciendo funcion " << DUMP_FUNC_MINIDUMP;
+            LOGGER_LOG(tmpLogger) << "Error traduciendo funcion " << DUMP_FUNC_MINIDUMP;
             return false;
         }
         
@@ -132,7 +174,7 @@ namespace Error
                                         , nullptr);
         if (!handleFichero)
         {
-            LOGGER_LOG(logger) << "Error creando fichero " << fileName << ": " << GetLastError();
+            LOGGER_LOG(tmpLogger) << "Error creando fichero " << fileName << ": " << GetLastError();
             return false;
         }
 
@@ -148,7 +190,7 @@ namespace Error
             std::lock_guard<std::mutex> lock(funcWrapper->getMutex());
             if (!funcAddress(requiredInfo.process, requiredInfo.processId, handleFichero, MiniDumpNormal, &miniDumpInfo, nullptr, nullptr))
             {
-                LOGGER_LOG(logger) << "Error generando dump: " << GetLastError();
+                LOGGER_LOG(tmpLogger) << "Error generando dump: " << GetLastError();
                 resultado = false;
             }
         }
@@ -211,7 +253,7 @@ namespace Error
     
     Error::ExitCode SafeThread::intermidiateWorker()
     {
-        ExceptionManager exceptionManager(false);
+        ExceptionManager exceptionManager;
         return this->worker();
     }
 

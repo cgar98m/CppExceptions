@@ -11,13 +11,13 @@ namespace Logger
     class ConsoleLogger: public ILogger
     {
         private:
-            static std::shared_ptr<ConsoleLogger> consoleLogger;
-            static std::mutex                     muxInstance;
+            static Logger     consoleLogger;
+            static std::mutex muxInstance;
             
             std::mutex printMutex;
 
         public:
-            static std::shared_ptr<ConsoleLogger> getInstance();
+            static Logger getInstance();
             
             ConsoleLogger& operator=(const ConsoleLogger&) = delete;
             ~ConsoleLogger() override = default;

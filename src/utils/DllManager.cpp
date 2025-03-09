@@ -8,13 +8,14 @@ namespace Utils
     // Wrapper de la funcion de una DLL //
     //////////////////////////////////////
 
-    DllFunctionWrapper::DllFunctionWrapper(const std::string& funcName, HMODULE module)
-        : funcName(funcName)
+    DllFunctionWrapper::DllFunctionWrapper(const std::string& funcName, HMODULE module, const Logger::Logger& logger)
+        : ILoggerHolder(logger)
+        , funcName(funcName)
     {
         if (funcName.empty() || !module) return;
 
         funcAddress = GetProcAddress(module, funcName.c_str());
-        if (!funcAddress) LOGGER_LOG(Logger::ConsoleLogger::getInstance()) << "Error obteniendo direccion de " << funcName << ": " << GetLastError();
+        if (!funcAddress) LOGGER_THIS_LOG() << "Error obteniendo direccion de " << funcName << ": " << GetLastError();
     }
 
     bool DllFunctionWrapper::isValid() const
@@ -36,19 +37,20 @@ namespace Utils
     // Wrapper de una DLL //
     ////////////////////////
     
-    DllWrapper::DllWrapper(const std::string& dllName)
-        : dllName(dllName)
+    DllWrapper::DllWrapper(const std::string& dllName, const Logger::Logger& logger)
+        : ILoggerHolder(logger)
+        , dllName(dllName)
     {
         if (dllName.empty()) return;
 
         moduleHandle = LoadLibraryA(dllName.c_str());
-        if (!moduleHandle) LOGGER_LOG(Logger::ConsoleLogger::getInstance()) << "Error cargando DLL " << dllName << ": " << GetLastError();
+        if (!moduleHandle) LOGGER_THIS_LOG() << "Error cargando DLL " << dllName << ": " << GetLastError();
     }
 
     DllWrapper::~DllWrapper()
     {
         if (!moduleHandle) return;
-        if (!FreeLibrary(moduleHandle)) LOGGER_LOG(Logger::ConsoleLogger::getInstance()) << "Error liberando DLL " << dllName << ": " << GetLastError();
+        if (!FreeLibrary(moduleHandle)) LOGGER_THIS_LOG() << "Error liberando DLL " << dllName << ": " << GetLastError();
     }
 
     bool DllWrapper::isValid() const
@@ -69,7 +71,7 @@ namespace Utils
         if (funcList.find(funcName) != funcList.end()) return funcList[funcName];
 
         // Buscamos la funcion
-        std::shared_ptr<DllFunctionWrapper> funcWrapper = std::make_shared<DllFunctionWrapper>(funcName, moduleHandle);
+        std::shared_ptr<DllFunctionWrapper> funcWrapper = std::make_shared<DllFunctionWrapper>(funcName, moduleHandle, getLogger());
         if (!funcWrapper || !funcWrapper->isValid()) return std::shared_ptr<DllFunctionWrapper>();
         funcList[funcName] = funcWrapper;
         return funcWrapper;
@@ -98,12 +100,12 @@ namespace Utils
     std::unique_ptr<DllManager> DllManager::instance;
     std::mutex                  DllManager::instanceMutex;
 
-    std::shared_ptr<DllWrapper> DllManager::getInstance(const std::string& dllName)
+    std::shared_ptr<DllWrapper> DllManager::getInstance(const std::string& dllName, const Logger::Logger& logger)
     {
         std::lock_guard<std::mutex> lock(instanceMutex);
 
         // Obtenemos la instancia gestora
-        if (!instance) instance.reset(new DllManager());
+        if (!instance) instance.reset(new DllManager(logger));
         if (!instance) return std::shared_ptr<DllWrapper>();
 
         // Obtenemos el modulo solicitado
@@ -121,6 +123,11 @@ namespace Utils
         return instance->deleteModule(dllName);
     }
 
+    DllManager::DllManager(const Logger::Logger& logger)
+        : ILoggerHolder(logger)
+    {
+    }
+
     std::shared_ptr<DllWrapper> DllManager::getModule(const std::string& dllName)
     {
         std::lock_guard<std::mutex> lock(dllMutex);
@@ -132,7 +139,7 @@ namespace Utils
         if (dllList.find(dllName) != dllList.end()) return dllList[dllName];
 
         // Creamos el modulo
-        std::shared_ptr<DllWrapper> dllWrapper = std::make_shared<DllWrapper>(dllName);
+        std::shared_ptr<DllWrapper> dllWrapper = std::make_shared<DllWrapper>(dllName, getLogger());
         if (!dllWrapper || !dllWrapper->isValid()) return std::shared_ptr<DllWrapper>();
         dllList[dllName] = dllWrapper;
         return dllWrapper;

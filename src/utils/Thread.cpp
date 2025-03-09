@@ -1,7 +1,6 @@
 #include "utils/Thread.h"
 
 #include "error/Exception.h"
-#include "logger/ConsoleLogger.h"
 
 namespace Utils
 {
@@ -56,8 +55,9 @@ namespace Utils
     const DWORD ThreadHolder::TIMEOUT_MS_STOP_WAIT = 5000;
     const DWORD ThreadHolder::TIMEOUT_MS_LOOP_WAIT = 100;
 
-    ThreadHolder::ThreadHolder(Thread &thread, const Params& params)
-        : thread(thread)
+    ThreadHolder::ThreadHolder(Thread &thread, const Params& params, const Logger::Logger& logger)
+        : ILoggerHolder(logger)
+        , thread(thread)
         , params(params)
     {
     }
@@ -69,8 +69,6 @@ namespace Utils
 
     bool ThreadHolder::run()
     {
-        std::shared_ptr<Logger::ILogger> logger = Logger::ConsoleLogger::getInstance();
-
         std::lock_guard<std::recursive_mutex> lock(threadMux);
         if (thread.getHandle()) return true;
 
@@ -79,7 +77,7 @@ namespace Utils
         HANDLE threadHandle = CreateThread(nullptr, 0, threadWrapper, this, CREATE_SUSPENDED, &threadId);
         if (!threadHandle)
         {
-            LOGGER_LOG(logger) << "Error creando hilo: " << GetLastError();
+            LOGGER_THIS_LOG() << "Error creando hilo: " << GetLastError();
             return false;
         }
 
@@ -89,14 +87,14 @@ namespace Utils
 
         // Asignamos prioridad
         if (!SetThreadPriority(threadHandle, params.threadPriority))
-            LOGGER_LOG(logger) << "Error especificando prioridad: " << GetLastError();
+            LOGGER_THIS_LOG() << "Error especificando prioridad: " << GetLastError();
         
         // Reanudamos el thread
         thread.setRunning(true);
         if (ResumeThread(threadHandle) == static_cast<DWORD>(-1))
         {
             thread.setRunning(false);
-            LOGGER_LOG(logger) << "Error reanudando ejecucion: " << GetLastError() << ". Forzamos el cierre del hilo...";
+            LOGGER_THIS_LOG() << "Error reanudando ejecucion: " << GetLastError() << ". Forzamos el cierre del hilo...";
             stop();
             return false;
         }
@@ -106,8 +104,6 @@ namespace Utils
 
     bool ThreadHolder::requestStop()
     {
-        std::shared_ptr<Logger::ILogger> logger = Logger::ConsoleLogger::getInstance();
-
         // Verificamos si existe hilo
         std::lock_guard<std::recursive_mutex> l_lock(threadMux);
         if (!thread.getHandle()) return false;
@@ -122,8 +118,6 @@ namespace Utils
     
     Error::ExitCode ThreadHolder::waitStop()
     {
-        std::shared_ptr<Logger::ILogger> logger = Logger::ConsoleLogger::getInstance();
-
         // Verificamos si existe hilo
         std::lock_guard<std::recursive_mutex> l_lock(threadMux);
         HANDLE threadHandle = thread.getHandle();
@@ -141,12 +135,12 @@ namespace Utils
                 break;
                 
             case WAIT_TIMEOUT:
-                LOGGER_LOG(logger) << "Timeout esperando finalizacion del hilo [" << threadId << "]. Forzando cerrado...";
+                LOGGER_THIS_LOG() << "Timeout esperando finalizacion del hilo [" << threadId << "]. Forzando cerrado...";
                 break;
                 
             case WAIT_FAILED:
             default:
-                LOGGER_LOG(logger) << "Error finalizando el hilo [" << threadId << "]: " << GetLastError() << ". Forzando cerrado...";
+                LOGGER_THIS_LOG() << "Error finalizando el hilo [" << threadId << "]: " << GetLastError() << ". Forzando cerrado...";
                 break;
         }
 
@@ -156,7 +150,7 @@ namespace Utils
         {
             if (!TerminateThread(threadHandle, static_cast<DWORD>(Error::ExitCode::EXIT_CODE_TERMINATE)))
             {
-                LOGGER_LOG(logger) << "Error forzando cierre de hilo [" << threadId << "]";
+                LOGGER_THIS_LOG() << "Error forzando cierre de hilo [" << threadId << "]";
                 resultadoTerminate = false;
             }
         }

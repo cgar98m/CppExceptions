@@ -6,6 +6,7 @@
 #include <mutex>
 #include <string>
 #include "error/Types.h"
+#include "logger/ConsoleLogger.h"
 #include "utils/Thread.h"
 
 namespace Error
@@ -27,12 +28,19 @@ namespace Error
             static const std::string DUMP_DLL_NAME;
             static const std::string DUMP_FUNC_MINIDUMP;
 
+            static Logger::Logger logger;
+            static std::mutex     loggerMutex;
+
+            static bool       firstException;
+            static std::mutex firstExceptionMutex;
+
+            static bool exceptionError;
+
             const LPTOP_LEVEL_EXCEPTION_FILTER topExceptionHandler = nullptr;
             const std::terminate_handler       topTerminateHandler = nullptr;
 
         public:
-            ExceptionManager() = delete;
-            explicit ExceptionManager(bool isGlobal = false);
+            ExceptionManager(bool isGlobal = false, const Logger::Logger& logger = Logger::ConsoleLogger::getInstance());
             ExceptionManager& operator=(const ExceptionManager&) = delete;
             virtual ~ExceptionManager();
 
@@ -90,6 +98,4 @@ namespace Error
         private:
             Error::ExitCode worker() final;
     };
-
-    // 
 };

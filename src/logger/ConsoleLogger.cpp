@@ -8,10 +8,10 @@ namespace Logger
     // ConsoleLogger  //
     ////////////////////
     
-    std::shared_ptr<ConsoleLogger> ConsoleLogger::consoleLogger;
+    Logger     ConsoleLogger::consoleLogger;
     std::mutex ConsoleLogger::muxInstance;
 
-    std::shared_ptr<ConsoleLogger> ConsoleLogger::getInstance()
+    Logger ConsoleLogger::getInstance()
     {
         std::lock_guard<std::mutex> lock(muxInstance);
         if (!consoleLogger) consoleLogger.reset(new ConsoleLogger());
