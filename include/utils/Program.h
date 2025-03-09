@@ -3,6 +3,7 @@
 #include <windows.h>
 #include <exception>
 #include <functional>
+#include "error/Types.h"
 #include "logger/ConsoleLogger.h"
 #include "parser/NamedArgumentParser.h"
 
@@ -42,7 +43,7 @@ namespace Utils
             Main& operator=(const Main&) = delete;
             virtual ~Main() = default;
 
-            int run(int argc, char **argv);
+            Error::ExitCode run(int argc, char **argv);
         
         private:
             // Previa a la ejecucion del programa
@@ -52,7 +53,7 @@ namespace Utils
             bool analyzeArgument(std::string name, ArgValue argument);
 
             // Logica del programa
-            int work();
+            Error::ExitCode work();
 
             // Utils
             std::string getWorkModeDescription(WorkMode workMode);

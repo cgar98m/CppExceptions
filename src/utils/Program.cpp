@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <stdexcept>
-#include "Version.h"
+#include "CMakeDefine.h"
 #include "error/Exception.h"
 
 namespace Utils
@@ -26,10 +26,10 @@ namespace Utils
     {
     }
 
-    int Main::run(int argc, char **argv)
+    Error::ExitCode Main::run(int argc, char **argv)
     {
         // Instanciamos el gestor de errores
-        Error::ExceptionManager exceptionManager(true, getLogger());
+        Error::ExceptionManager exceptionManager(true, EXTERNALIZE_DUMPS, getLogger());
         
         // Limpiamos el objeto
         clear();
@@ -169,7 +169,7 @@ namespace Utils
     }
 
     // Logica del programa
-    int Main::work()
+    Error::ExitCode Main::work()
     {
         LOGGER_THIS_LOG() << "Inicio de la ejecucion";
 
@@ -216,7 +216,7 @@ namespace Utils
         }
         
         LOGGER_THIS_LOG() << "Fin de la ejecucion";
-        return 0;
+        return Error::ExitCode::EXIT_CODE_OK;
     }
 
     // Utils
