@@ -10,6 +10,16 @@
 
 namespace Error
 {
+    // Informacion minima para generar un mini dump
+    struct MiniDumpRequiredInfo
+    {
+        HANDLE process   = GetCurrentProcess();
+        DWORD  processId = GetCurrentProcessId();
+        DWORD  threadId  = GetCurrentThreadId();
+
+        bool isValid() const;
+    };
+
     // Manejo de excepciones
     class ExceptionManager
     {
@@ -33,7 +43,8 @@ namespace Error
             static LONG manageException(PEXCEPTION_POINTERS exception);
             static LONG manageCriticalMsvcException(PEXCEPTION_POINTERS exception);
 
-            static bool createDumpFile(PEXCEPTION_POINTERS exception);
+            static bool createDumpFile(PEXCEPTION_POINTERS exception, const MiniDumpRequiredInfo& requiredInfo);
+            static std::string getDumpFileName();
     };
     
     // Thread con proteccion de excepciones

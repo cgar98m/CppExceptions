@@ -9,6 +9,15 @@
 
 namespace Error
 {
+    //////////////////////////////////////////////////
+    // Informacion minima para generar un mini dump //
+    //////////////////////////////////////////////////
+
+    bool MiniDumpRequiredInfo::isValid() const
+    {
+        return process && processId && threadId;
+    }
+
     ////////////////////////////
     // Manejo de excepciones  //
     ////////////////////////////
@@ -63,7 +72,7 @@ namespace Error
         std::shared_ptr<Logger::ILogger> logger = Logger::ConsoleLogger::getInstance();
         LOGGER_LOG(logger) << "Excepcion detectada";
         
-        if (!createDumpFile(exception)) LOGGER_LOG(logger) << "Error creando dump";
+        if (!createDumpFile(exception, MiniDumpRequiredInfo())) LOGGER_LOG(logger) << "Error creando mini dump";
         
         std::terminate();
         return EXCEPTION_EXECUTE_HANDLER;
@@ -73,14 +82,22 @@ namespace Error
     {
         std::shared_ptr<Logger::ILogger> logger = Logger::ConsoleLogger::getInstance();
         LOGGER_LOG(logger) << "Excepcion CRITICA detectada";
+
         std::terminate();
         return EXCEPTION_EXECUTE_HANDLER;
     }
 
-    bool ExceptionManager::createDumpFile(PEXCEPTION_POINTERS exception)
+    bool ExceptionManager::createDumpFile(PEXCEPTION_POINTERS exception, const MiniDumpRequiredInfo& requiredInfo)
     {
         std::shared_ptr<Logger::ILogger> logger = Logger::ConsoleLogger::getInstance();
         
+        // Verificamos los datos obtenidos
+        if (!exception || !requiredInfo.isValid())
+        {
+            LOGGER_LOG(logger) << "Informacion para mini dump incompleta";
+            return false;
+        }
+
         // Cargamos la DLL
         std::shared_ptr<Utils::DllWrapper> dllWrapper = Utils::DllManager::getInstance(DUMP_DLL_NAME);
         if (!dllWrapper || !dllWrapper->isValid())
@@ -103,22 +120,9 @@ namespace Error
             LOGGER_LOG(logger) << "Error traduciendo funcion " << DUMP_FUNC_MINIDUMP;
             return false;
         }
-
-        // Preparamos el nombre del fichero de dump
-        SYSTEMTIME stNow;
-        GetLocalTime(&stNow);
-
-        std::stringstream ssFileName;
-        ssFileName << std::setw(4) << std::setfill('0') << stNow.wYear
-                   << std::setw(2) << std::setfill('0') << stNow.wMonth
-                   << std::setw(2) << std::setfill('0') << stNow.wDay
-                   << "_"
-                   << std::setw(2) << std::setfill('0') << stNow.wSecond 
-                   << std::setw(3) << std::setfill('0') << stNow.wMilliseconds
-                   << "_crashdump.dmp";
-        std::string fileName = ssFileName.str();
         
         // Creamos el fichero
+        std::string fileName = getDumpFileName();
         HANDLE handleFichero = CreateFile(fileName.c_str()
                                         , GENERIC_READ | GENERIC_WRITE
                                         , FILE_SHARE_WRITE | FILE_SHARE_READ
@@ -134,7 +138,7 @@ namespace Error
 
         // Preparamos los datos de la llamada
         MINIDUMP_EXCEPTION_INFORMATION miniDumpInfo;
-        miniDumpInfo.ThreadId          = GetCurrentThreadId();
+        miniDumpInfo.ThreadId          = requiredInfo.threadId;
         miniDumpInfo.ExceptionPointers = exception;
         miniDumpInfo.ClientPointers    = FALSE;
 
@@ -142,7 +146,7 @@ namespace Error
         bool resultado = true;
         {
             std::lock_guard<std::mutex> lock(funcWrapper->getMutex());
-            if (!funcAddress(GetCurrentProcess(), GetCurrentProcessId(), handleFichero, MiniDumpNormal, &miniDumpInfo, nullptr, nullptr))
+            if (!funcAddress(requiredInfo.process, requiredInfo.processId, handleFichero, MiniDumpNormal, &miniDumpInfo, nullptr, nullptr))
             {
                 LOGGER_LOG(logger) << "Error generando dump: " << GetLastError();
                 resultado = false;
@@ -155,6 +159,23 @@ namespace Error
         // Descargamos la DLL y terminamos
         Utils::DllManager::deleteInstance(DUMP_DLL_NAME);
         return resultado;
+    }
+    
+    std::string ExceptionManager::getDumpFileName()
+    {
+        SYSTEMTIME stNow;
+        GetLocalTime(&stNow);
+
+        std::stringstream ssFileName;
+        ssFileName << std::setw(4) << std::setfill('0') << stNow.wYear
+                   << std::setw(2) << std::setfill('0') << stNow.wMonth
+                   << std::setw(2) << std::setfill('0') << stNow.wDay
+                   << "_"
+                   << std::setw(2) << std::setfill('0') << stNow.wSecond 
+                   << std::setw(3) << std::setfill('0') << stNow.wMilliseconds
+                   << "_crashdump.dmp";
+        
+        return ssFileName.str();
     }
 
     //////////////////////////////////////////
