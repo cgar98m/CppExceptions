@@ -1,3 +1,4 @@
+#include <windows.h>
 #include "CMakeDefine.h"
 #include "error/Exception.h"
 #include "logger/ConsoleLogger.h"
@@ -13,5 +14,9 @@ int main(int argc, char **argv)
     Utils::Main program(logger);
 
     // Ejecutamos el programa
-    return static_cast<int>(program.run(argc, argv));
+    int result = static_cast<int>(program.run(argc, argv));
+
+    // Esperamos para que las trazas se escriban
+    Sleep(1000);
+    return result;
 }

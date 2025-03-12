@@ -1,5 +1,6 @@
 #pragma once
 
+#include <windows.h>
 #include <ostream>
 #include <memory>
 #include <mutex>
@@ -11,6 +12,12 @@
 
 namespace Logger
 {
+    // Constantes globales
+    const size_t LOGGER_BUFFER_SIZE = 1024;
+
+    const std::string LOGGER_STANDARD_OUTPUT_MUX_NAME    = "StdCoutMutex";
+    const DWORD       LOGGER_STANDARD_OUTPUT_MUX_TIMEOUT = 1000;
+    
     // Interfaz de un logger
     class ILogger
     {
@@ -34,19 +41,20 @@ namespace Logger
             static Logger     basicLogger;
             static std::mutex muxInstance;
             
-            std::mutex printMutex;
+            HANDLE     printMutex;
+            std::mutex printMutexMux;
 
         public:
             static Logger getInstance();
 
             BasicLogger(const BasicLogger&) = delete;
             BasicLogger& operator=(const BasicLogger&) = delete;
-            virtual ~BasicLogger() = default;
+            virtual ~BasicLogger();
             
             bool print(const std::string& message) final;
             
         private:
-            BasicLogger() = default;
+            BasicLogger();
 
             bool printEnqueued(const std::string& message) final;
     };

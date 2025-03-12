@@ -33,7 +33,7 @@ namespace Logger
     Error::ExitCode IThreadedLogger::worker()
     {
         std::string message;
-        switch (printQueue.pop(message, TIMEOUT_MS_PRINT_WAIT))
+        switch (printQueue.top(message, TIMEOUT_MS_PRINT_WAIT))
         {
             case WAIT_OBJECT_0:
                 break;
@@ -48,6 +48,7 @@ namespace Logger
         }
 
         if (!printEnqueued(message)) return Error::ExitCode::EXIT_CODE_KO;
+        if (printQueue.pop(message, 0) != WAIT_OBJECT_0) return Error::ExitCode::EXIT_CODE_KO;
         return Error::ExitCode::EXIT_CODE_OK;
     }
 };

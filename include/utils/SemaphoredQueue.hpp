@@ -68,6 +68,55 @@ namespace Utils
                 return result;
             }
 
+            DWORD top(T& data, DWORD timeout = QUEUE_POP_TIMEOUT)
+            {
+                HANDLE semaphore = nullptr;
+                {
+                    std::lock_guard<std::mutex> lock(semaphoreMutex);
+                    if (!queueSemaphore) return WAIT_ABANDONED;
+
+                    HANDLE processHandle = GetCurrentProcess();
+                    if (!DuplicateHandle(processHandle
+                                       , queueSemaphore
+                                       , processHandle
+                                       , &semaphore
+                                       , 0
+                                       , FALSE
+                                       , DUPLICATE_SAME_ACCESS))
+                        return WAIT_ABANDONED;
+                }
+                if (!semaphore) return WAIT_ABANDONED;
+
+                DWORD resultado = WaitForSingleObject(semaphore, timeout);
+                switch (resultado)
+                {
+                    case WAIT_OBJECT_0:
+                    {
+                        std::lock_guard<std::mutex> lock(queueMutex);
+                        if (queueList.empty())
+                        {
+                            resultado = WAIT_FAILED;
+                            break;
+                        }
+                        
+                        data = queueList.front();
+                        if (!ReleaseSemaphore(semaphore, 1, nullptr)) resultado = WAIT_FAILED;
+                        break;
+                    }
+        
+                    case WAIT_TIMEOUT:
+                        break;
+                    
+                    case WAIT_ABANDONED:
+                    case WAIT_FAILED:
+                    default:
+                        break;
+                }
+                CloseHandle(semaphore);
+
+                return resultado;
+            }
+
             DWORD pop(T& data, DWORD timeout = QUEUE_POP_TIMEOUT)
             {
                 HANDLE semaphore = nullptr;

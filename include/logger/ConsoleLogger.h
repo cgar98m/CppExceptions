@@ -14,15 +14,18 @@ namespace Logger
             static Logger     consoleLogger;
             static std::mutex muxInstance;
 
+            HANDLE     printMutex;
+            std::mutex printMutexMux;
+
         public:
             static Logger getInstance();
             
             ConsoleLogger(const ConsoleLogger&) = delete;
             ConsoleLogger& operator=(const ConsoleLogger&) = delete;
-            ~ConsoleLogger() = default;
+            virtual ~ConsoleLogger();
             
         private:
-            ConsoleLogger() = default;
+            ConsoleLogger();
             
             bool printEnqueued(const std::string &message) final;
     };
