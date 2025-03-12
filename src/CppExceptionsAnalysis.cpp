@@ -31,6 +31,6 @@ int main(int argc, char **argv)
     }
 
     // Esperamos para que las trazas se escriban
-    Sleep(1000);
+    Sleep(Logger::LOGGER_STANDARD_OUTPUT_FLUSH_TIMEOUT);
     return static_cast<int>(Error::ExitCode::EXIT_CODE_OK);
 }

@@ -15,8 +15,9 @@ namespace Logger
     // Constantes globales
     const size_t LOGGER_BUFFER_SIZE = 1024;
 
-    const std::string LOGGER_STANDARD_OUTPUT_MUX_NAME    = "StdCoutMutex";
-    const DWORD       LOGGER_STANDARD_OUTPUT_MUX_TIMEOUT = 1000;
+    const std::string LOGGER_STANDARD_OUTPUT_MUX_NAME      = "StdCoutMutex";
+    const DWORD       LOGGER_STANDARD_OUTPUT_MUX_TIMEOUT   = 1000;
+    const DWORD       LOGGER_STANDARD_OUTPUT_FLUSH_TIMEOUT = 1000;
     
     // Interfaz de un logger
     class ILogger

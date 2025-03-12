@@ -4,7 +4,6 @@
 #include "logger/ConsoleLogger.h"
 #include "utils/Program.h"
 
-
 int main(int argc, char **argv)
 {
     // Obtenemos el logger
@@ -17,6 +16,6 @@ int main(int argc, char **argv)
     int result = static_cast<int>(program.run(argc, argv));
 
     // Esperamos para que las trazas se escriban
-    Sleep(1000);
+    Sleep(Logger::LOGGER_STANDARD_OUTPUT_FLUSH_TIMEOUT);
     return result;
 }
