@@ -4,7 +4,7 @@
 #include <atomic>
 #include <mutex>
 #include "error/Types.h"
-#include "logger/ConsoleLogger.h"
+#include "logger/ILogger.h"
 
 namespace Utils
 {
@@ -59,7 +59,7 @@ namespace Utils
 
         public:
             ThreadHolder() = delete;
-            explicit ThreadHolder(Thread &thread, const Params &params, const Logger::Logger& logger = Logger::ConsoleLogger::getInstance());
+            explicit ThreadHolder(Thread &thread, const Params &params, const Logger::Logger& logger = Logger::BasicLogger::getInstance());
             ThreadHolder& operator=(const ThreadHolder&) = delete;
             virtual ~ThreadHolder();
 

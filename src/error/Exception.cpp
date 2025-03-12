@@ -400,7 +400,7 @@ namespace Error
     std::unique_ptr<ExternalExceptionManager> ExceptionManager::externalExceptionManager;
     std::recursive_mutex                      ExceptionManager::externalizeMutex;
 
-    Logger::Logger ExceptionManager::logger = Logger::ConsoleLogger::getInstance();
+    Logger::Logger ExceptionManager::logger = Logger::BasicLogger::getInstance();
     std::mutex     ExceptionManager::loggerMutex;
 
     bool       ExceptionManager::firstException = true;

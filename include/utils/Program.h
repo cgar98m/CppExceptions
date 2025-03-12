@@ -4,7 +4,7 @@
 #include <exception>
 #include <functional>
 #include "error/Types.h"
-#include "logger/ConsoleLogger.h"
+#include "logger/ILogger.h"
 #include "parser/NamedArgumentParser.h"
 
 namespace Utils
@@ -38,7 +38,7 @@ namespace Utils
             static const ArgList ARG_LIST;
 
         public:
-            explicit Main(const Logger::Logger& logger = Logger::ConsoleLogger::getInstance());
+            explicit Main(const Logger::Logger& logger = Logger::BasicLogger::getInstance());
             Main(const Main&) = delete;
             Main& operator=(const Main&) = delete;
             virtual ~Main() = default;

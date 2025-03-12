@@ -18,10 +18,10 @@ namespace Logger
         return consoleLogger;
     }
 
-    void ConsoleLogger::print(const std::string &message)
+    bool ConsoleLogger::printEnqueued(const std::string &message)
     {
-        std::lock_guard<std::mutex> lock(printMutex);
         std::cout << message << std::endl;
+        return true;
     }
 
 };

@@ -5,7 +5,7 @@
 #include <memory>
 #include <mutex>
 #include <string>
-#include "logger/ConsoleLogger.h"
+#include "logger/ILogger.h"
 
 namespace Utils
 {
@@ -19,7 +19,7 @@ namespace Utils
 
         public:
             DllFunctionWrapper() = delete;
-            DllFunctionWrapper(const std::string& funcName, HMODULE module, const Logger::Logger& logger = Logger::ConsoleLogger::getInstance());
+            DllFunctionWrapper(const std::string& funcName, HMODULE module, const Logger::Logger& logger = Logger::BasicLogger::getInstance());
             DllFunctionWrapper(const DllFunctionWrapper&) = delete;
             DllFunctionWrapper operator=(const DllFunctionWrapper&) = delete;
             virtual ~DllFunctionWrapper() = default;
@@ -44,7 +44,7 @@ namespace Utils
 
         public:
             DllWrapper() = delete;
-            DllWrapper(const std::string& dllName, const Logger::Logger& logger = Logger::ConsoleLogger::getInstance());
+            DllWrapper(const std::string& dllName, const Logger::Logger& logger = Logger::BasicLogger::getInstance());
             DllWrapper(const DllWrapper&) = delete;
             DllWrapper operator=(const DllWrapper&) = delete;
             virtual ~DllWrapper();
@@ -68,7 +68,7 @@ namespace Utils
             std::mutex dllMutex;
 
         public:
-            static std::shared_ptr<DllWrapper> getInstance(const std::string& dllName, const Logger::Logger& logger = Logger::ConsoleLogger::getInstance());
+            static std::shared_ptr<DllWrapper> getInstance(const std::string& dllName, const Logger::Logger& logger = Logger::BasicLogger::getInstance());
             static bool deleteInstance(const std::string& dllName);
             
             DllManager(const DllManager&) = delete;
@@ -76,7 +76,7 @@ namespace Utils
             virtual ~DllManager() = default;
 
         private:
-            DllManager(const Logger::Logger& logger = Logger::ConsoleLogger::getInstance());
+            DllManager(const Logger::Logger& logger = Logger::BasicLogger::getInstance());
 
             std::shared_ptr<DllWrapper> getModule(const std::string& dllName);
             bool deleteModule(const std::string& dllName);

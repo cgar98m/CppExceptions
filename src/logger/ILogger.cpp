@@ -6,6 +6,47 @@
 
 namespace Logger
 {
+    ////////////////////////////
+    // Interfaz de un logger  //
+    ////////////////////////////
+    
+    bool ILogger::print(const std::string& message)
+    {
+        return printEnqueued(message);
+    }
+
+    bool ILogger::printEnqueued(const std::string& message)
+    {
+        (void) message;
+        return false;
+    }
+
+    ////////////////////////////////////////////////
+    // Interfaz de un logger por salida estandar  //
+    ////////////////////////////////////////////////
+
+    Logger     BasicLogger::basicLogger;
+    std::mutex BasicLogger::muxInstance;
+
+    Logger BasicLogger::getInstance()
+    {
+        std::lock_guard<std::mutex> lock(muxInstance);
+        if (!basicLogger) basicLogger.reset(new BasicLogger());
+        return basicLogger;
+    }
+
+    bool BasicLogger::print(const std::string& message)
+    {
+        std::lock_guard<std::mutex> lock(printMutex);
+        return printEnqueued(message);
+    }
+
+    bool BasicLogger::printEnqueued(const std::string& message)
+    {
+        std::cout << message << std::endl;
+        return true;
+    }
+
     //////////////
     // LogEntry //
     //////////////
@@ -66,7 +107,7 @@ namespace Logger
         ssMessage << message;
 
         // Pintamos el mensaje
-        logger->print(ssMessage.str());
+        if (!logger->print(ssMessage.str())) std::cout << "TRAZA PERDIDA" << std::endl;
     }
 
     ////////////////////////////////////////////////

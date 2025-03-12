@@ -1,6 +1,7 @@
 #include "CMakeDefine.h"
 #include "error/Exception.h"
 #include "error/Types.h"
+#include "logger/ConsoleLogger.h"
 
 int main(int argc, char **argv)
 {

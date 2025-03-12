@@ -20,9 +20,36 @@ namespace Logger
             ILogger& operator=(const ILogger&) = delete;
             virtual ~ILogger() = default;
 
-            virtual void print(const std::string&) = 0;
+            virtual bool print(const std::string& message);
+
+        private:
+            virtual bool printEnqueued(const std::string& message);
     };
     using Logger = std::shared_ptr<ILogger>;
+
+    // Interfaz de un logger por salida estandar
+    class BasicLogger: public ILogger
+    {
+        private:
+            static Logger     basicLogger;
+            static std::mutex muxInstance;
+            
+            std::mutex printMutex;
+
+        public:
+            static Logger getInstance();
+
+            BasicLogger(const BasicLogger&) = delete;
+            BasicLogger& operator=(const BasicLogger&) = delete;
+            virtual ~BasicLogger() = default;
+            
+            bool print(const std::string& message) final;
+            
+        private:
+            BasicLogger() = default;
+
+            bool printEnqueued(const std::string& message) final;
+    };
 
     // Entrada de log (NO es thread safe)
     class LogEntry

@@ -3,28 +3,27 @@
 #include <memory>
 #include <mutex>
 #include <string>
-#include "logger/ILogger.h"
+#include "logger/IThreadedLogger.h"
 
 namespace Logger
 {
     // Logger para consola
-    class ConsoleLogger: public ILogger
+    class ConsoleLogger: public IThreadedLogger
     {
         private:
             static Logger     consoleLogger;
             static std::mutex muxInstance;
-            
-            std::mutex printMutex;
 
         public:
             static Logger getInstance();
             
+            ConsoleLogger(const ConsoleLogger&) = delete;
             ConsoleLogger& operator=(const ConsoleLogger&) = delete;
-            ~ConsoleLogger() override = default;
+            ~ConsoleLogger() = default;
             
-            void print(const std::string &message) final;
-        
         private:
             ConsoleLogger() = default;
+            
+            bool printEnqueued(const std::string &message) final;
     };
 };

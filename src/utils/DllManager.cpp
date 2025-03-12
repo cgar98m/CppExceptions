@@ -1,7 +1,5 @@
 #include "utils/DllManager.h"
 
-#include "logger/ConsoleLogger.h"
-
 namespace Utils
 {
     //////////////////////////////////////

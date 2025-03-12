@@ -3,7 +3,7 @@
 #include <windows.h>
 #include <mutex>
 #include <string>
-#include "logger/ConsoleLogger.h"
+#include "logger/ILogger.h"
 
 namespace Utils
 {
@@ -24,7 +24,7 @@ namespace Utils
             std::recursive_mutex sharedMemmoryMutex;
 
         public:
-            SharedMemory(const std::string& name, bool isOwner, const Logger::Logger& logger = Logger::ConsoleLogger::getInstance())
+            SharedMemory(const std::string& name, bool isOwner, const Logger::Logger& logger = Logger::BasicLogger::getInstance())
                 : ILoggerHolder(logger)
                 , name(name)
             {

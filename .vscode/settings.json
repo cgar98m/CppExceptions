@@ -70,7 +70,8 @@
         "deque": "cpp",
         "array": "cpp",
         "ranges": "cpp",
-        "span": "cpp"
+        "span": "cpp",
+        "queue": "cpp"
     },
     "cmake.configureSettings": {
         "EXTERNALIZE_DUMPS_DEFINE": true

@@ -28,6 +28,7 @@ add_executable(CppExceptions
     "${PROJECT_SOURCE_DIR}/src/error/MsvcException.cpp"
     "${PROJECT_SOURCE_DIR}/src/logger/ConsoleLogger.cpp"
     "${PROJECT_SOURCE_DIR}/src/logger/ILogger.cpp"
+    "${PROJECT_SOURCE_DIR}/src/logger/IThreadedLogger.cpp"
     "${PROJECT_SOURCE_DIR}/src/parser/NamedArgumentParser.cpp"
     "${PROJECT_SOURCE_DIR}/src/parser/ParsedArgument.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/DllManager.cpp"
@@ -43,6 +44,7 @@ add_executable(CppExceptionsAnalysis
     "${PROJECT_SOURCE_DIR}/src/error/MsvcException.cpp"
     "${PROJECT_SOURCE_DIR}/src/logger/ConsoleLogger.cpp"
     "${PROJECT_SOURCE_DIR}/src/logger/ILogger.cpp"
+    "${PROJECT_SOURCE_DIR}/src/logger/IThreadedLogger.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/DllManager.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/Thread.cpp")
 target_include_directories(CppExceptionsAnalysis PUBLIC "${PROJECT_SOURCE_DIR}/include/")

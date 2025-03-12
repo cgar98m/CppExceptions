@@ -5,9 +5,22 @@
 #include <memory>
 #include <mutex>
 #include <string>
+
+namespace Logger
+{
+    class ILogger;
+    class ILoggerHolder;
+    using Logger = std::shared_ptr<ILogger>;
+};
+
+namespace Utils
+{
+    class Thread;
+};
+
 #include "error/MsvcException.h"
 #include "error/Types.h"
-#include "logger/ConsoleLogger.h"
+#include "logger/ILogger.h"
 #include "utils/SharedMemory.hpp"
 #include "utils/Thread.h"
 
@@ -46,7 +59,7 @@ namespace Error
             std::recursive_mutex analysisMutex;
 
         public:
-            ExternalExceptionManager(bool isSender = true, const Logger::Logger& logger = Logger::ConsoleLogger::getInstance());
+            ExternalExceptionManager(bool isSender = true, const Logger::Logger& logger = Logger::BasicLogger::getInstance());
             ExternalExceptionManager(const ExternalExceptionManager&) = delete;
             ExternalExceptionManager& operator=(const ExternalExceptionManager&) = delete;
             virtual ~ExternalExceptionManager();
@@ -90,7 +103,7 @@ namespace Error
             const std::terminate_handler       topTerminateHandler = nullptr;
 
         public:
-            ExceptionManager(bool isGlobal = false, bool externalize = false, const Logger::Logger& logger = Logger::ConsoleLogger::getInstance());
+            ExceptionManager(bool isGlobal = false, bool externalize = false, const Logger::Logger& logger = Logger::BasicLogger::getInstance());
             ExceptionManager& operator=(const ExceptionManager&) = delete;
             virtual ~ExceptionManager();
 
