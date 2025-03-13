@@ -1,6 +1,7 @@
 #include "error/Exception.h"
 
 #include <algorithm>
+#include <cstdlib>
 #include <dbghelp.h>
 #include <iomanip>
 #include <iostream>
@@ -414,8 +415,12 @@ namespace Error
     {
         if (isGlobal)
         {
-            std::lock_guard<std::mutex> lock(loggerMutex);
-            this->logger = logger;
+            std::atexit(manageSafeExit);
+
+            {
+                std::lock_guard<std::mutex> lock(loggerMutex);
+                this->logger = logger;
+            }
 
             if (externalize)
             {
@@ -446,15 +451,31 @@ namespace Error
 
     void ExceptionManager::manageTerminate()
     {
+        if (exceptionError)
+        {
+            // Damos tiempo a que se escriban todos los logs
+            Sleep(Logger::LOGGER_FLUSH_TIMEOUT);
+            std::abort();
+        }
+
         Logger::Logger tmpLogger;
         {
             std::lock_guard<std::mutex> lock(loggerMutex);
             tmpLogger = logger;
         }
         LOGGER_LOG(tmpLogger) << "Terminate ejecutado";
-
-        if (exceptionError) std::abort();
         std::exit(0);
+    }
+
+    void ExceptionManager::manageSafeExit()
+    {
+        __try
+        {
+            manageExit();
+        }
+        __except (manageCriticalMsvcException(GetExceptionInformation()))
+        {
+        }
     }
 
     bool ExceptionManager::createDumpFile(const MiniDumpRequiredInfo& requiredInfo)
@@ -588,6 +609,19 @@ namespace Error
         return EXCEPTION_EXECUTE_HANDLER;
     }
     
+    void ExceptionManager::manageExit()
+    {
+        Logger::Logger tmpLogger;
+        {
+            std::lock_guard<std::mutex> lock(loggerMutex);
+            tmpLogger = logger;
+        }
+        LOGGER_LOG(tmpLogger) << "Exit ejecutado";
+
+        // Damos tiempo a que se escriban todos los logs
+        Sleep(Logger::LOGGER_FLUSH_TIMEOUT);
+    }
+
     std::string ExceptionManager::getDumpFileName()
     {
         SYSTEMTIME stNow;

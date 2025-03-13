@@ -16,8 +16,8 @@ namespace Logger
             static const DWORD TIMEOUT_MS_LOOP_WAIT;
             static const DWORD TIMEOUT_MS_PRINT_WAIT;
 
-            Utils::ThreadHolder                 printThread;
-            Utils::SemaphoredQueue<std::string> printQueue;
+            Utils::ThreadHolder            printThread;
+            Utils::SemaphoredQueue<LogMsg> printQueue;
 
         public:
             IThreadedLogger();
@@ -25,10 +25,10 @@ namespace Logger
             IThreadedLogger& operator=(const IThreadedLogger&) = delete;
             virtual ~IThreadedLogger() = default;
 
-            bool print(const std::string& message) final;
+            bool print(const LogMsg &message) final;
 
         private:
-            virtual bool printEnqueued(const std::string& message);
+            virtual bool printEnqueued(const LogMsg &message);
 
             Error::ExitCode worker() final;
     };

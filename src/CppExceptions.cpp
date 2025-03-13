@@ -13,9 +13,5 @@ int main(int argc, char **argv)
     Utils::Main program(logger);
 
     // Ejecutamos el programa
-    int result = static_cast<int>(program.run(argc, argv));
-
-    // Esperamos para que las trazas se escriban
-    Sleep(Logger::LOGGER_STANDARD_OUTPUT_FLUSH_TIMEOUT);
-    return result;
+    return static_cast<int>(program.run(argc, argv));
 }

@@ -7,6 +7,9 @@ namespace Logger
     ////////////////////
     // ConsoleLogger  //
     ////////////////////
+
+    const std::string ConsoleLogger::MUX_PREFIX  = STDCOUT_MUX_PREFIX;
+    const DWORD       ConsoleLogger::MUX_TIMEOUT = BasicLogger::MUX_TIMEOUT;
     
     Logger     ConsoleLogger::consoleLogger;
     std::mutex ConsoleLogger::muxInstance;
@@ -26,12 +29,14 @@ namespace Logger
 
     ConsoleLogger::ConsoleLogger()
         : IThreadedLogger()
-        , printMutex(CreateMutex(nullptr, FALSE, LOGGER_STANDARD_OUTPUT_MUX_NAME.c_str()))
+        , printMutex(CreateMutex(nullptr, FALSE, BasicLogger::MUX_PREFIX.c_str()))
     {
     }
 
-    bool ConsoleLogger::printEnqueued(const std::string &message)
+    bool ConsoleLogger::printEnqueued(const LogMsg &message)
     {
+        if (message.text.empty()) return true;
+
         HANDLE localPrintMutex = nullptr;
         {
             std::lock_guard<std::mutex> lock(printMutexMux);
@@ -49,11 +54,11 @@ namespace Logger
         }
         if (!localPrintMutex) return false;
 
-        if (WaitForSingleObject(localPrintMutex, LOGGER_STANDARD_OUTPUT_MUX_TIMEOUT) != WAIT_OBJECT_0) return false;
+        if (WaitForSingleObject(localPrintMutex, MUX_TIMEOUT) != WAIT_OBJECT_0) return false;
 
-        for (size_t idx = 0; idx < message.size(); idx += LOGGER_BUFFER_SIZE)
+        for (size_t idx = 0; idx < message.text.size(); idx += LOGGER_BUFFER_SIZE)
         {
-            std::cout << std::string(message, idx, LOGGER_BUFFER_SIZE) << std::flush;
+            std::cout << std::string(message.text, idx, LOGGER_BUFFER_SIZE);
         }
         std::cout << std::endl;
         

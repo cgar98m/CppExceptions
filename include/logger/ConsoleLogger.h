@@ -10,6 +10,10 @@ namespace Logger
     // Logger para consola
     class ConsoleLogger: public IThreadedLogger
     {
+        public:
+            static const std::string MUX_PREFIX;
+            static const DWORD       MUX_TIMEOUT;
+
         private:
             static Logger     consoleLogger;
             static std::mutex muxInstance;
@@ -27,6 +31,6 @@ namespace Logger
         private:
             ConsoleLogger();
             
-            bool printEnqueued(const std::string &message) final;
+            bool printEnqueued(const LogMsg &message) final;
     };
 };

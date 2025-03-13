@@ -109,12 +109,14 @@ namespace Error
 
             static LONG WINAPI manageUnhandledException(PEXCEPTION_POINTERS exception);
             static void manageTerminate();
+            static void manageSafeExit();
         
             static bool createDumpFile(const MiniDumpRequiredInfo& requiredInfo);
             
         private:
             static LONG manageException(PEXCEPTION_POINTERS exception);
             static LONG manageCriticalMsvcException(PEXCEPTION_POINTERS exception);
+            static void manageExit();
 
             static std::string getDumpFileName();
     };

@@ -7,18 +7,26 @@
 #include <sstream>
 #include <string>
 
-#define LOGGER_LOG(logger) Logger::LogEntry((logger), (__func__), __FILE__, __LINE__)()
-#define LOGGER_THIS_LOG() LOGGER_LOG(getLogger())
 
 namespace Logger
 {
-    // Constantes globales
-    const size_t LOGGER_BUFFER_SIZE = 1024;
+    // Defines globales (no les afecta el namespace)
+    #define LOGGER_LOG(logger) Logger::LogEntry((logger), (__func__), __FILE__, __LINE__)()
+    #define LOGGER_THIS_LOG() LOGGER_LOG(getLogger())
 
-    const std::string LOGGER_STANDARD_OUTPUT_MUX_NAME      = "StdCoutMutex";
-    const DWORD       LOGGER_STANDARD_OUTPUT_MUX_TIMEOUT   = 1000;
-    const DWORD       LOGGER_STANDARD_OUTPUT_FLUSH_TIMEOUT = 1000;
+    #define STDCOUT_MUX_PREFIX std::string("StdCoutMutex")
     
+    // Constantes globales
+    const size_t LOGGER_BUFFER_SIZE   = 1024;
+    const DWORD  LOGGER_FLUSH_TIMEOUT = 2000;
+    
+    // Datos necesarios de una traza
+    struct LogMsg
+    {
+        SYSTEMTIME  date = {};
+        std::string text;
+    };
+
     // Interfaz de un logger
     class ILogger
     {
@@ -28,16 +36,20 @@ namespace Logger
             ILogger& operator=(const ILogger&) = delete;
             virtual ~ILogger() = default;
 
-            virtual bool print(const std::string& message);
+            virtual bool print(const LogMsg &message);
 
         private:
-            virtual bool printEnqueued(const std::string& message);
+            virtual bool printEnqueued(const LogMsg &message);
     };
     using Logger = std::shared_ptr<ILogger>;
 
     // Interfaz de un logger por salida estandar
     class BasicLogger: public ILogger
     {
+        public:
+            static const std::string MUX_PREFIX;
+            static const DWORD       MUX_TIMEOUT;
+
         private:
             static Logger     basicLogger;
             static std::mutex muxInstance;
@@ -52,22 +64,25 @@ namespace Logger
             BasicLogger& operator=(const BasicLogger&) = delete;
             virtual ~BasicLogger();
             
-            bool print(const std::string& message) final;
+            bool print(const LogMsg &message) final;
             
         private:
             BasicLogger();
 
-            bool printEnqueued(const std::string& message) final;
+            bool printEnqueued(const LogMsg &message) final;
     };
 
     // Entrada de log (NO es thread safe)
     class LogEntry
     {
         private:
-            Logger            logger;
-            std::string       func;
-            std::string       file;
-            size_t            line;
+            Logger logger;
+
+            SYSTEMTIME  date = {};
+            std::string func;
+            std::string file;
+            size_t      line;
+
             std::stringstream sstream;
 
         public:
@@ -93,8 +108,8 @@ namespace Logger
 
         public:
             ILoggerHolder() = delete;
-            explicit ILoggerHolder(const Logger& logger);
-            ILoggerHolder& operator=(const Logger& logger) = delete;
+            explicit ILoggerHolder(const Logger &logger);
+            ILoggerHolder& operator=(const Logger&) = delete;
             virtual ~ILoggerHolder() = default;
 
         protected:

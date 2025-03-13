@@ -19,20 +19,20 @@ namespace Logger
     {
     }
 
-    bool IThreadedLogger::print(const std::string& message)
+    bool IThreadedLogger::print(const LogMsg &message)
     {
         if (!printThread.run()) return false;
         return printQueue.push(message);
     }
 
-    bool IThreadedLogger::printEnqueued(const std::string& message)
+    bool IThreadedLogger::printEnqueued(const LogMsg &message)
     {
         return false;
     }
 
     Error::ExitCode IThreadedLogger::worker()
     {
-        std::string message;
+        LogMsg message;
         switch (printQueue.top(message, TIMEOUT_MS_PRINT_WAIT))
         {
             case WAIT_OBJECT_0:

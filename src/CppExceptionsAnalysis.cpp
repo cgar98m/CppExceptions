@@ -30,7 +30,5 @@ int main(int argc, char **argv)
         return static_cast<int>(Error::ExitCode::EXIT_CODE_KO);
     }
 
-    // Esperamos para que las trazas se escriban
-    Sleep(Logger::LOGGER_STANDARD_OUTPUT_FLUSH_TIMEOUT);
     return static_cast<int>(Error::ExitCode::EXIT_CODE_OK);
 }
