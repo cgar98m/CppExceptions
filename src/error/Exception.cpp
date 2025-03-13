@@ -8,6 +8,7 @@
 #include <sstream>
 #include <vector>
 #include "utils/DllManager.h"
+#include "utils/FileSystem.h"
 
 namespace Error
 {
@@ -624,19 +625,25 @@ namespace Error
 
     std::string ExceptionManager::getDumpFileName()
     {
+        // Obtenemos la ruta del directorio
+        std::string dumpDir = Utils::FileSystem::getAbsolutePath(Utils::FileSystem::OUTPUT_PATH);
+        
+        // Obtenemos la fecha
         SYSTEMTIME stNow;
         GetLocalTime(&stNow);
 
+        // Montamos la ruta completa
         std::stringstream ssFileName;
-        ssFileName << std::setw(4) << std::setfill('0') << stNow.wYear
-                   << std::setw(2) << std::setfill('0') << stNow.wMonth
-                   << std::setw(2) << std::setfill('0') << stNow.wDay
-                   << "_"
-                   << std::setw(2) << std::setfill('0') << stNow.wHour
-                   << std::setw(2) << std::setfill('0') << stNow.wMinute
-                   << std::setw(2) << std::setfill('0') << stNow.wSecond
-                   << std::setw(3) << std::setfill('0') << stNow.wMilliseconds
-                   << "_crashdump.dmp";
+        if (!dumpDir.empty()) ssFileName << dumpDir;
+        ssFileName << std::setw(4) << std::setfill('0') << stNow.wYear;
+        ssFileName << std::setw(2) << std::setfill('0') << stNow.wMonth;
+        ssFileName << std::setw(2) << std::setfill('0') << stNow.wDay;
+        ssFileName << "_";
+        ssFileName << std::setw(2) << std::setfill('0') << stNow.wHour;
+        ssFileName << std::setw(2) << std::setfill('0') << stNow.wMinute;
+        ssFileName << std::setw(2) << std::setfill('0') << stNow.wSecond;
+        ssFileName << std::setw(3) << std::setfill('0') << stNow.wMilliseconds;
+        ssFileName << "_crashdump.dmp";
         
         return ssFileName.str();
     }

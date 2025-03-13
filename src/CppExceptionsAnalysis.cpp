@@ -2,10 +2,12 @@
 #include "error/Exception.h"
 #include "error/Types.h"
 #include "logger/ConsoleLogger.h"
+#include "logger/FileLogger.h"
+#include "utils/FileSystem.h"
 
 int main(int argc, char **argv)
 {
-    Logger::Logger logger = Logger::ConsoleLogger::getInstance();
+    Logger::Logger logger = Logger::FileLogger::getInstance("DumpAnalysis", Utils::FileSystem::OUTPUT_PATH);
 
     if (!EXTERNALIZE_DUMPS)
     {

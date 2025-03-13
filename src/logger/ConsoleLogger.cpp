@@ -4,9 +4,9 @@
 
 namespace Logger
 {
-    ////////////////////
-    // ConsoleLogger  //
-    ////////////////////
+    //////////////////////////
+    // Logger para consola  //
+    //////////////////////////
 
     const std::string ConsoleLogger::MUX_PREFIX  = STDCOUT_MUX_PREFIX;
     const DWORD       ConsoleLogger::MUX_TIMEOUT = BasicLogger::MUX_TIMEOUT;
@@ -23,13 +23,16 @@ namespace Logger
 
     ConsoleLogger::~ConsoleLogger()
     {
-        std::lock_guard<std::mutex> lock(printMutexMux);
+        std::lock_guard<std::mutex> lockPrint(printMutexMux);
         if (printMutex) CloseHandle(printMutex);
+
+        std::lock_guard<std::mutex> lockLogger(muxInstance);
+        if (consoleLogger) consoleLogger.reset();
     }
 
     ConsoleLogger::ConsoleLogger()
         : IThreadedLogger()
-        , printMutex(CreateMutex(nullptr, FALSE, BasicLogger::MUX_PREFIX.c_str()))
+        , printMutex(CreateMutex(nullptr, FALSE, MUX_PREFIX.c_str()))
     {
     }
 

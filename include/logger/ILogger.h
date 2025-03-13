@@ -7,14 +7,13 @@
 #include <sstream>
 #include <string>
 
-
 namespace Logger
 {
     // Defines globales (no les afecta el namespace)
     #define LOGGER_LOG(logger) Logger::LogEntry((logger), (__func__), __FILE__, __LINE__)()
     #define LOGGER_THIS_LOG() LOGGER_LOG(getLogger())
 
-    #define STDCOUT_MUX_PREFIX std::string("StdCoutMutex")
+    #define STDCOUT_MUX_PREFIX "Logger/StdCoutMutex"
     
     // Constantes globales
     const size_t LOGGER_BUFFER_SIZE   = 1024;
