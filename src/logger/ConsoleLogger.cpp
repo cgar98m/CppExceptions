@@ -56,6 +56,7 @@ namespace Logger
 
         if (WaitForSingleObject(localPrintMutex, MUX_TIMEOUT) != WAIT_OBJECT_0) return false;
 
+        std::cout << "[" << message.processId << "]: ";
         for (size_t idx = 0; idx < message.text.size(); idx += LOGGER_BUFFER_SIZE)
         {
             std::cout << std::string(message.text, idx, LOGGER_BUFFER_SIZE);

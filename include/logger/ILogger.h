@@ -23,7 +23,8 @@ namespace Logger
     // Datos necesarios de una traza
     struct LogMsg
     {
-        SYSTEMTIME  date = {};
+        DWORD       processId = 0;
+        SYSTEMTIME  date      = {};
         std::string text;
     };
 

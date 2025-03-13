@@ -76,6 +76,7 @@ namespace Logger
 
         if (WaitForSingleObject(localPrintMutex, MUX_TIMEOUT) != WAIT_OBJECT_0) return false;
 
+        std::cout << "[" << message.processId << "]: ";
         for (size_t idx = 0; idx < message.text.size(); idx += LOGGER_BUFFER_SIZE)
         {
             std::cout << std::string(message.text, idx, LOGGER_BUFFER_SIZE);
@@ -137,8 +138,8 @@ namespace Logger
         ssMessage << std::setfill('0') << std::setw(2) << date.wSecond       << ".";
         ssMessage << std::setfill('0') << std::setw(3) << date.wMilliseconds << " ";
 
-        // Montamos la identificacion
-        ssMessage << "[" << GetCurrentProcessId() << "|" << GetCurrentThreadId() << "] ";
+        // Montamos la identificacion del hilo
+        ssMessage << "[" << GetCurrentThreadId() << "] ";
 
         // Montamos el contexto
         ssMessage << file << ":" << line << ": ";
@@ -148,7 +149,7 @@ namespace Logger
         ssMessage << message;
 
         // Pintamos el mensaje
-        if (!logger->print({ date, ssMessage.str() })) std::cout << "TRAZA PERDIDA" << std::endl;
+        if (!logger->print({ GetCurrentProcessId(), date, ssMessage.str() })) std::cout << "TRAZA PERDIDA" << std::endl;
     }
 
     ////////////////////////////////////////////////
