@@ -1,4 +1,4 @@
-#include "utils/libraries/DllManager.h"
+#include "utils/library/DllManager.h"
 
 namespace Utils
 {
