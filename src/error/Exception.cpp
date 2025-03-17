@@ -7,8 +7,8 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
-#include "utils/DllManager.h"
 #include "utils/files/FileTools.h"
+#include "utils/libraries/DllManager.h"
 
 namespace Error
 {

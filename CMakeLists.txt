@@ -33,10 +33,10 @@ add_executable(CppExceptions
     "${PROJECT_SOURCE_DIR}/src/logger/IThreadedLogger.cpp"
     "${PROJECT_SOURCE_DIR}/src/parser/NamedArgumentParser.cpp"
     "${PROJECT_SOURCE_DIR}/src/parser/ParsedArgument.cpp"
-    "${PROJECT_SOURCE_DIR}/src/utils/DllManager.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/Program.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/Thread.cpp"
-    "${PROJECT_SOURCE_DIR}/src/utils/files/FileTools.cpp")
+    "${PROJECT_SOURCE_DIR}/src/utils/files/FileTools.cpp"
+    "${PROJECT_SOURCE_DIR}/src/utils/libraries/DllManager.cpp")
 target_include_directories(CppExceptions PUBLIC "${PROJECT_SOURCE_DIR}/include/")
 target_link_libraries(CppExceptions PUBLIC dbghelp)
 
@@ -49,8 +49,8 @@ add_executable(CppExceptionsAnalysis
     "${PROJECT_SOURCE_DIR}/src/logger/FileLogger.cpp"
     "${PROJECT_SOURCE_DIR}/src/logger/ILogger.cpp"
     "${PROJECT_SOURCE_DIR}/src/logger/IThreadedLogger.cpp"
-    "${PROJECT_SOURCE_DIR}/src/utils/DllManager.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/Thread.cpp"
-    "${PROJECT_SOURCE_DIR}/src/utils/files/FileTools.cpp")
-target_include_directories(CppExceptionsAnalysis PUBLIC "${PROJECT_SOURCE_DIR}/include/")
+    "${PROJECT_SOURCE_DIR}/src/utils/files/FileTools.cpp"
+    "${PROJECT_SOURCE_DIR}/src/utils/libraries/DllManager.cpp")
+    target_include_directories(CppExceptionsAnalysis PUBLIC "${PROJECT_SOURCE_DIR}/include/")
 target_link_libraries(CppExceptionsAnalysis PUBLIC dbghelp)
