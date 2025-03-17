@@ -21,8 +21,8 @@ namespace Utils
 #include "error/MsvcException.h"
 #include "error/Types.h"
 #include "logger/ILogger.h"
-#include "utils/SharedMemory.hpp"
 #include "utils/Thread.h"
+#include "utils/ipc/SharedMemory.hpp"
 
 namespace Error
 {

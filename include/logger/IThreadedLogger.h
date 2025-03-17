@@ -3,8 +3,8 @@
 #include <windows.h>
 #include <string>
 #include "error/Exception.h"
-#include "utils/container/SemaphoredQueue.hpp"
 #include "utils/Thread.h"
+#include "utils/container/SemaphoredQueue.hpp"
 
 namespace Logger
 {
