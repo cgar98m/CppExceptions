@@ -1,5 +1,4 @@
 #include <windows.h>
-#include "CMakeDefine.h"
 #include "error/Exception.h"
 #include "logger/ConsoleLogger.h"
 #include "utils/Program.h"

@@ -4,7 +4,8 @@
 #include <algorithm>
 #include <iomanip>
 #include <stdexcept>
-#include "CMakeDefine.h"
+#include "Config.h"
+#include "Version.h"
 #include "error/Exception.h"
 
 namespace Utils
@@ -29,7 +30,7 @@ namespace Utils
     Error::ExitCode Main::run(int argc, char **argv)
     {
         // Instanciamos el gestor de errores
-        Error::ExceptionManager exceptionManager(true, EXTERNALIZE_DUMPS, getLogger());
+        Error::ExceptionManager exceptionManager(true, CONFIG_EXTERNALIZE_DUMPS, getLogger());
         
         // Limpiamos el objeto
         clear();

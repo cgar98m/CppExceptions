@@ -1,4 +1,4 @@
-#include "CMakeDefine.h"
+#include "Config.h"
 #include "error/Exception.h"
 #include "error/Types.h"
 #include "logger/ConsoleLogger.h"
@@ -9,7 +9,7 @@ int main(int argc, char **argv)
 {
     Logger::Logger logger = Logger::FileLogger::getInstance("DumpAnalysis", Utils::FileSystem::OUTPUT_PATH);
 
-    if (!EXTERNALIZE_DUMPS)
+    if (!CONFIG_EXTERNALIZE_DUMPS)
     {
         LOGGER_LOG(logger) << "No se puede ejecutar el programa";
         return static_cast<int>(Error::ExitCode::EXIT_CODE_NOT_IMPLEMENTED);

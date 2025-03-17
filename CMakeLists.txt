@@ -4,15 +4,16 @@ cmake_minimum_required(VERSION 3.31)
 # Configuramos el nombre del proyecto y su version
 project(CppExceptions VERSION 0.6)
 
-# Configuramos defines
+# Configuramos los defines
 if (EXTERNALIZE_DUMPS_DEFINE)
     set(EXTERNALIZE_DUMPS true)
 else()
     set(EXTERNALIZE_DUMPS false)
 endif()
 
-# Actualizamos fichero de defines
-configure_file(${PROJECT_SOURCE_DIR}/cmake/CMakeDefine.h.in ${PROJECT_SOURCE_DIR}/include/CMakeDefine.h)
+# Actualizamos los ficheros generados con CMake
+configure_file(${PROJECT_SOURCE_DIR}/cmakeInclude/Config.h.in ${PROJECT_SOURCE_DIR}/include/Config.h)
+configure_file(${PROJECT_SOURCE_DIR}/cmakeInclude/Version.h.in ${PROJECT_SOURCE_DIR}/include/Version.h)
 
 # Establecemos el estandar de C++
 set(CMAKE_CXX_STANDARD 14)
