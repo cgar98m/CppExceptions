@@ -1,4 +1,4 @@
-#include "utils/FileSystem.h"
+#include "utils/files/FileTools.h"
 
 #include <windows.h>
 #include <vector>
@@ -9,9 +9,9 @@ namespace Utils
     // Utilidades del sistema de ficheros //
     ////////////////////////////////////////
     
-    const std::string FileSystem::OUTPUT_PATH = "output";
+    const std::string FileTools::OUTPUT_PATH = "output";
 
-    std::string FileSystem::getAbsolutePath(const std::string& relativePath)
+    std::string FileTools::getAbsolutePath(const std::string& relativePath)
     {
         // Verificamos su existencia
         if (GetFileAttributes(relativePath.c_str()) == INVALID_FILE_ATTRIBUTES)
@@ -43,7 +43,7 @@ namespace Utils
         return std::string(fullPath.begin(), fullPath.end()) + "\\";    
     }
 
-    bool FileSystem::createFile(const std::string& filePath)
+    bool FileTools::createFile(const std::string& filePath)
     {
         // Verificamos su existencia
         if (GetFileAttributes(filePath.c_str()) == INVALID_FILE_ATTRIBUTES)

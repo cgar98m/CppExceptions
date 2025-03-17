@@ -3,11 +3,11 @@
 #include "error/Types.h"
 #include "logger/ConsoleLogger.h"
 #include "logger/FileLogger.h"
-#include "utils/FileSystem.h"
+#include "utils/files/FileTools.h"
 
 int main(int argc, char **argv)
 {
-    Logger::Logger logger = Logger::FileLogger::getInstance("DumpAnalysis", Utils::FileSystem::OUTPUT_PATH);
+    Logger::Logger logger = Logger::FileLogger::getInstance("DumpAnalysis", Utils::FileTools::OUTPUT_PATH);
 
     if (!CONFIG_EXTERNALIZE_DUMPS)
     {

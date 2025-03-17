@@ -5,7 +5,7 @@
 namespace Utils
 {
     // Utilidades del sistema de ficheros
-    class FileSystem
+    class FileTools
     {
         public:
             static const std::string OUTPUT_PATH;

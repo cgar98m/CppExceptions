@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <sstream>
-#include "utils/FileSystem.h"
+#include "utils/files/FileTools.h"
 
 namespace Logger
 {
@@ -22,7 +22,7 @@ namespace Logger
         Logger logger;
         if (fileBaseName.empty()) return logger;
         
-        std::string loggerPath = Utils::FileSystem::getAbsolutePath(fileDir);
+        std::string loggerPath = Utils::FileTools::getAbsolutePath(fileDir);
         if (loggerPath.empty()) return logger;
 
         std::string filePath = loggerPath + fileBaseName;
@@ -120,7 +120,7 @@ namespace Logger
         if (lastFileStream) lastFileStream.reset();
 
         // Obtenemos ruta absoluta
-        std::string loggerPath = Utils::FileSystem::getAbsolutePath(fileDir);
+        std::string loggerPath = Utils::FileTools::getAbsolutePath(fileDir);
         if (loggerPath.empty()) return false;
 
         // Montamos la ruta completa

@@ -8,7 +8,7 @@
 #include <sstream>
 #include <vector>
 #include "utils/DllManager.h"
-#include "utils/FileSystem.h"
+#include "utils/files/FileTools.h"
 
 namespace Error
 {
@@ -626,7 +626,7 @@ namespace Error
     std::string ExceptionManager::getDumpFileName()
     {
         // Obtenemos la ruta del directorio
-        std::string dumpDir = Utils::FileSystem::getAbsolutePath(Utils::FileSystem::OUTPUT_PATH);
+        std::string dumpDir = Utils::FileTools::getAbsolutePath(Utils::FileTools::OUTPUT_PATH);
         
         // Obtenemos la fecha
         SYSTEMTIME stNow;
