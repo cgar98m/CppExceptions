@@ -2,7 +2,7 @@
 
 #include <windows.h>
 
-namespace Error
+namespace Utils
 {
     // Codigos de error
     enum class ExitCode: DWORD

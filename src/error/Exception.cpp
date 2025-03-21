@@ -664,9 +664,9 @@ namespace Error
     {
     }
 
-    Error::ExitCode SafeThread::workerWrapper()
+    Utils::ExitCode SafeThread::workerWrapper()
     {
-        Error::ExitCode resultado = Error::ExitCode::EXIT_CODE_OK;
+        Utils::ExitCode resultado = Utils::ExitCode::EXIT_CODE_OK;
 
         // Protegemos la ejecucion
         __try
@@ -675,18 +675,18 @@ namespace Error
         }
         __except (Error::ExceptionManager::manageUnhandledException(GetExceptionInformation()))
         {
-            resultado = Error::ExitCode::EXIT_CODE_EXCEPTION;
+            resultado = Utils::ExitCode::EXIT_CODE_EXCEPTION;
         }
 
         return resultado;
     }
 
-    Error::ExitCode SafeThread::worker()
+    Utils::ExitCode SafeThread::worker()
     {
-        return Error::ExitCode::EXIT_CODE_NOT_IMPLEMENTED;
+        return Utils::ExitCode::EXIT_CODE_NOT_IMPLEMENTED;
     }
     
-    Error::ExitCode SafeThread::intermidiateWorker()
+    Utils::ExitCode SafeThread::intermidiateWorker()
     {
         ExceptionManager exceptionManager;
         return this->worker();
@@ -696,20 +696,20 @@ namespace Error
     // Clase para generar excepciones C++ en un thread  //
     //////////////////////////////////////////////////////
 
-    Error::ExitCode CppExceptionThread::worker()
+    Utils::ExitCode CppExceptionThread::worker()
     {
         throw std::runtime_error("Threaded C++ Exception");
-        return Error::ExitCode::EXIT_CODE_OK;
+        return Utils::ExitCode::EXIT_CODE_OK;
     }
 
     ////////////////////////////////////////
     // Thread que genera excepciones SEH  //
     ////////////////////////////////////////
     
-    Error::ExitCode SehExceptionThread::worker()
+    Utils::ExitCode SehExceptionThread::worker()
     {
         int *p = nullptr;
         *p = 20;
-        return Error::ExitCode::EXIT_CODE_OK;
+        return Utils::ExitCode::EXIT_CODE_OK;
     }
 };

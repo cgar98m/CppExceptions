@@ -2,7 +2,7 @@
 
 #include <windows.h>
 #include "error/Exception.h"
-#include "error/Types.h"
+#include "utils/ExitCode.h"
 #include "utils/Thread.h"
 #include "utils/container/SemaphoredQueue.hpp"
 #include "utils/logging/BasicLogger.h"
@@ -33,6 +33,6 @@ namespace Utils
         private:
             virtual bool printEnqueued(const LogMsg &message) = 0;
 
-            Error::ExitCode worker() final;
+            Utils::ExitCode worker() final;
     };
 };

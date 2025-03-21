@@ -3,7 +3,7 @@
 #include <windows.h>
 #include <atomic>
 #include <mutex>
-#include "error/Types.h"
+#include "utils/ExitCode.h"
 #include "utils/logging/BasicLogger.h"
 #include "utils/logging/ILogger.h"
 
@@ -32,10 +32,10 @@ namespace Utils
             bool isRunning() const;
             void setRunning(bool newRunning = false);
 
-            virtual Error::ExitCode workerWrapper();
+            virtual Utils::ExitCode workerWrapper();
             
         protected:
-            virtual Error::ExitCode worker();
+            virtual Utils::ExitCode worker();
     };
 
     // Gestor de un thread
@@ -67,10 +67,10 @@ namespace Utils
             virtual bool run();
 
             bool requestStop();
-            Error::ExitCode waitStop();
-            Error::ExitCode stop();
+            Utils::ExitCode waitStop();
+            Utils::ExitCode stop();
 
-            Error::ExitCode threadLoop();
+            Utils::ExitCode threadLoop();
 
             static DWORD WINAPI threadWrapper(LPVOID param);
     };

@@ -38,14 +38,14 @@ namespace Utils
         running = newRunning;
     }
 
-    Error::ExitCode Thread::workerWrapper()
+    Utils::ExitCode Thread::workerWrapper()
     {
         return this->worker();
     }
 
-    Error::ExitCode Thread::worker()
+    Utils::ExitCode Thread::worker()
     {
-        return Error::ExitCode::EXIT_CODE_NOT_IMPLEMENTED;
+        return Utils::ExitCode::EXIT_CODE_NOT_IMPLEMENTED;
     }
 
     //////////////////////////
@@ -116,13 +116,13 @@ namespace Utils
         return true;
     }
     
-    Error::ExitCode ThreadHolder::waitStop()
+    Utils::ExitCode ThreadHolder::waitStop()
     {
         // Verificamos si existe hilo
         std::lock_guard<std::recursive_mutex> l_lock(threadMux);
         HANDLE threadHandle = thread.getHandle();
         DWORD  threadId     = thread.getId();
-        if (!threadHandle) return Error::ExitCode::EXIT_CODE_OK;
+        if (!threadHandle) return Utils::ExitCode::EXIT_CODE_OK;
 
         // Verificamos si se ha solicitado su detencion
         if (!thread.isRunning()) thread.setRunning(false);
@@ -148,7 +148,7 @@ namespace Utils
         bool resultadoTerminate = true;
         if (resultadoFinHilo != WAIT_OBJECT_0)
         {
-            if (!TerminateThread(threadHandle, static_cast<DWORD>(Error::ExitCode::EXIT_CODE_TERMINATE)))
+            if (!TerminateThread(threadHandle, static_cast<DWORD>(Utils::ExitCode::EXIT_CODE_TERMINATE)))
             {
                 LOGGER_THIS_LOG_INFO() << "ERROR forzando cierre de hilo [" << threadId << "]";
                 resultadoTerminate = false;
@@ -159,24 +159,24 @@ namespace Utils
         thread.setHandle();
         thread.setId();
 
-        if (!resultadoTerminate) return Error::ExitCode::EXIT_CODE_OK;
-        return Error::ExitCode::EXIT_CODE_KO;
+        if (!resultadoTerminate) return Utils::ExitCode::EXIT_CODE_OK;
+        return Utils::ExitCode::EXIT_CODE_KO;
     }
 
-    Error::ExitCode ThreadHolder::stop()
+    Utils::ExitCode ThreadHolder::stop()
     {
         return waitStop();
     }
 
-    Error::ExitCode ThreadHolder::threadLoop()
+    Utils::ExitCode ThreadHolder::threadLoop()
     {
-        Error::ExitCode resultado = Error::ExitCode::EXIT_CODE_OK;
+        Utils::ExitCode resultado = Utils::ExitCode::EXIT_CODE_OK;
 
         do
         {
             Sleep(params.loopWait);
             resultado = thread.workerWrapper();
-            if (resultado != Error::ExitCode::EXIT_CODE_OK) thread.setRunning(false);
+            if (resultado != Utils::ExitCode::EXIT_CODE_OK) thread.setRunning(false);
         }
         while (thread.isRunning());
 
@@ -185,7 +185,7 @@ namespace Utils
 
     DWORD WINAPI ThreadHolder::threadWrapper(LPVOID param)
     {
-        Error::ExitCode resultado = Error::ExitCode::EXIT_CODE_KO;
+        Utils::ExitCode resultado = Utils::ExitCode::EXIT_CODE_KO;
 
         ThreadHolder *threadHolder = static_cast<ThreadHolder*>(param);
         if (threadHolder) resultado = threadHolder->threadLoop();

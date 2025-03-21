@@ -6,7 +6,7 @@
 #include <mutex>
 #include <string>
 #include "error/MsvcException.h"
-#include "error/Types.h"
+#include "utils/ExitCode.h"
 #include "utils/Thread.h"
 #include "utils/ipc/SharedMemory.hpp"
 #include "utils/logging/BasicLogger.h"
@@ -118,13 +118,13 @@ namespace Error
             SafeThread& operator=(const SafeThread&) = delete;
             virtual ~SafeThread() = default;
 
-            virtual Error::ExitCode workerWrapper() final;
+            virtual Utils::ExitCode workerWrapper() final;
 
         protected:
-            virtual Error::ExitCode worker();
+            virtual Utils::ExitCode worker();
         
         private:
-            Error::ExitCode intermidiateWorker();
+            Utils::ExitCode intermidiateWorker();
     };
 
     // Thread que genera excepciones C++
@@ -137,7 +137,7 @@ namespace Error
             virtual ~CppExceptionThread() = default;
 
         private:
-            Error::ExitCode worker() final;
+            Utils::ExitCode worker() final;
     };
 
     // Thread que genera excepciones SEH
@@ -150,6 +150,6 @@ namespace Error
             virtual ~SehExceptionThread() = default;
         
         private:
-            Error::ExitCode worker() final;
+            Utils::ExitCode worker() final;
     };
 };

@@ -27,7 +27,7 @@ namespace Utils
     {
     }
 
-    Error::ExitCode Main::run(int argc, char **argv)
+    Utils::ExitCode Main::run(int argc, char **argv)
     {
         // Instanciamos el gestor de errores
         Error::ExceptionManager exceptionManager(true, CONFIG_EXTERNALIZE_DUMPS, getLogger());
@@ -170,7 +170,7 @@ namespace Utils
     }
 
     // Logica del programa
-    Error::ExitCode Main::work()
+    Utils::ExitCode Main::work()
     {
         LOGGER_THIS_LOG_INFO() << "Inicio de la ejecucion";
 
@@ -217,7 +217,7 @@ namespace Utils
         }
         
         LOGGER_THIS_LOG_INFO() << "Fin de la ejecucion";
-        return Error::ExitCode::EXIT_CODE_OK;
+        return Utils::ExitCode::EXIT_CODE_OK;
     }
 
     // Utils

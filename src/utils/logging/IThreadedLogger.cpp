@@ -26,7 +26,7 @@ namespace Utils
         return printQueue.push(message);
     }
 
-    Error::ExitCode IThreadedLogger::worker()
+    Utils::ExitCode IThreadedLogger::worker()
     {
         LogMsg message;
         switch (printQueue.top(message, TIMEOUT_MS_PRINT_WAIT))
@@ -35,16 +35,16 @@ namespace Utils
                 break;
 
             case WAIT_TIMEOUT:
-                return Error::ExitCode::EXIT_CODE_OK;
+                return Utils::ExitCode::EXIT_CODE_OK;
             
             case WAIT_ABANDONED:
             case WAIT_FAILED:
             default:
-                return Error::ExitCode::EXIT_CODE_KO;
+                return Utils::ExitCode::EXIT_CODE_KO;
         }
 
         if (!printEnqueued(message) || (printQueue.pop(message, 0) != WAIT_OBJECT_0))
-            return Error::ExitCode::EXIT_CODE_KO;
-        return Error::ExitCode::EXIT_CODE_OK;
+            return Utils::ExitCode::EXIT_CODE_KO;
+        return Utils::ExitCode::EXIT_CODE_OK;
     }
 };
