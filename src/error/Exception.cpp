@@ -62,8 +62,8 @@ namespace Error
 
         LOGGER_THIS_LOG_INFO() << "Enviando excepcion...";
 
-        ExceptionPointers exceptionPointers(*exception);
-        LimitedExceptionPointer limitedExceptionPointer;
+        Utils::ExceptionPointers       exceptionPointers(*exception);
+        Utils::LimitedExceptionPointer limitedExceptionPointer;
         limitedExceptionPointer.isValid       = true;
         limitedExceptionPointer.contextRecord = exceptionPointers.contextRecord;
 
@@ -129,8 +129,8 @@ namespace Error
 
         // Esperamos al proceso principal
         MiniDumpRequiredInfo           miniDumpInfo;
-        Error::ExceptionPointers       exceptionPointers;
-        Error::LimitedExceptionPointer limitedExceptionPointer;
+        Utils::ExceptionPointers       exceptionPointers;
+        Utils::LimitedExceptionPointer limitedExceptionPointer;
         bool exitLoop = false;
         while (!exitLoop)
         {

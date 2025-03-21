@@ -3,7 +3,7 @@
 #include <windows.h>
 #include <vector>
 
-namespace Error
+namespace Utils
 {
     // EXCEPTION_RECORD copiable
     struct ExceptionRecord

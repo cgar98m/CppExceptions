@@ -5,9 +5,9 @@
 #include <memory>
 #include <mutex>
 #include <string>
-#include "error/MsvcException.h"
 #include "utils/ExitCode.h"
 #include "utils/Thread.h"
+#include "utils/exception/MsvcException.h"
 #include "utils/ipc/SharedMemory.hpp"
 #include "utils/logging/BasicLogger.h"
 #include "utils/logging/ILogger.h"
@@ -37,7 +37,7 @@ namespace Error
             static const DWORD EXTERNAL_APP_CLOSE_TIME;
 
             bool isSender;
-            Utils::SharedMemory<LimitedExceptionPointer> requiredDumpInfo;
+            Utils::SharedMemory<Utils::LimitedExceptionPointer> requiredDumpInfo;
             
             HANDLE     startOfAnalysisHandle = nullptr;
             HANDLE     endOfAnalysisHandle   = nullptr;

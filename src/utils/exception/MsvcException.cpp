@@ -1,9 +1,9 @@
-#include "error/MsvcException.h"
+#include "utils/exception/MsvcException.h"
 
 #include <cstring>
 #include <stack>
 
-namespace Error
+namespace Utils
 {
     ////////////////////////////////
     // EXCEPTION_RECORD copiable  //
@@ -16,7 +16,7 @@ namespace Error
         , exceptionAddress(exceptionRecord.exceptionAddress)
         , numberParameters(exceptionRecord.numberParameters)
     {
-        ZeroMemory(exceptionInformation, sizeof(ULONG_PTR) * EXCEPTION_MAXIMUM_PARAMETERS);
+        ZeroMemory(exceptionInformation, sizeof(exceptionInformation));
         std::memcpy(exceptionInformation, exceptionRecord.exceptionInformation, sizeof(ULONG_PTR) * numberParameters);
     }
 
@@ -27,7 +27,7 @@ namespace Error
         , exceptionAddress(exceptionRecord.ExceptionAddress)
         , numberParameters(exceptionRecord.NumberParameters)
     {
-        ZeroMemory(exceptionInformation, sizeof(ULONG_PTR) * EXCEPTION_MAXIMUM_PARAMETERS);
+        ZeroMemory(exceptionInformation, sizeof(exceptionInformation));
         std::memcpy(exceptionInformation, exceptionRecord.ExceptionInformation, sizeof(ULONG_PTR) * numberParameters);
     }
 
@@ -39,7 +39,7 @@ namespace Error
         exceptionAddress = exceptionRecord.exceptionAddress;
         numberParameters = exceptionRecord.numberParameters;
         
-        ZeroMemory(&exceptionInformation, sizeof(ULONG_PTR) * EXCEPTION_MAXIMUM_PARAMETERS);
+        ZeroMemory(&exceptionInformation, sizeof(exceptionInformation));
         std::memcpy(exceptionInformation, exceptionRecord.exceptionInformation, sizeof(ULONG_PTR) * numberParameters);
         
         return *this;
@@ -53,7 +53,7 @@ namespace Error
         exceptionAddress = exceptionRecord.ExceptionAddress;
         numberParameters = exceptionRecord.NumberParameters;
         
-        ZeroMemory(&exceptionInformation, sizeof(ULONG_PTR) * EXCEPTION_MAXIMUM_PARAMETERS);
+        ZeroMemory(&exceptionInformation, sizeof(exceptionInformation));
         std::memcpy(exceptionInformation, exceptionRecord.ExceptionInformation, sizeof(ULONG_PTR) * numberParameters);
         
         return *this;
@@ -160,7 +160,7 @@ namespace Error
                 record->NumberParameters = itExceptionRecord->numberParameters;
                 record->ExceptionRecord  = nullptr;
 
-                ZeroMemory(record->ExceptionInformation, sizeof(ULONG_PTR) * EXCEPTION_MAXIMUM_PARAMETERS);
+                ZeroMemory(record->ExceptionInformation, sizeof(record->ExceptionInformation));
                 std::memcpy(record->ExceptionInformation, itExceptionRecord->exceptionInformation, sizeof(ULONG_PTR) * record->NumberParameters);
 
                 if (previousRecord) previousRecord->ExceptionRecord = record;
