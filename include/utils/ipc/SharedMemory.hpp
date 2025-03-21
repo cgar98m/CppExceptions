@@ -3,13 +3,14 @@
 #include <windows.h>
 #include <mutex>
 #include <string>
-#include "logger/ILogger.h"
+#include "utils/logging/BasicLogger.h"
+#include "utils/logging/ILogger.h"
 
 namespace Utils
 {
     // Memoria compartida
     template <typename T>
-    class SharedMemory: public Logger::ILoggerHolder
+    class SharedMemory: public Utils::ILoggerHolder
     {
         public:
             static const DWORD TIMEOUT_READ;
@@ -24,7 +25,7 @@ namespace Utils
             std::recursive_mutex sharedMemmoryMutex;
 
         public:
-            SharedMemory(const std::string& name, bool isOwner, const Logger::Logger& logger = Logger::BasicLogger::getInstance())
+            SharedMemory(const std::string &name, bool isOwner, const Utils::Logger &logger = Utils::BasicLogger::getInstance())
                 : ILoggerHolder(logger)
                 , name(name)
             {
@@ -61,7 +62,7 @@ namespace Utils
                 return sharedMemmoryGlobalMutex && fileMapping && mapView;
             }
 
-            bool readData(T& data, DWORD timeout = TIMEOUT_READ)
+            bool readData(T &data, DWORD timeout = TIMEOUT_READ)
             {
                 std::lock_guard<std::recursive_mutex> lock(sharedMemmoryMutex);
                 if (!sharedMemmoryGlobalMutex || !fileMapping || !mapView) return false;
@@ -73,7 +74,7 @@ namespace Utils
                 return releaseOwnership();
             }
 
-            bool writeData(const T& data, bool flush = true, DWORD timeout = TIMEOUT_WRITE)
+            bool writeData(const T &data, bool flush = true, DWORD timeout = TIMEOUT_WRITE)
             {
                 std::lock_guard<std::recursive_mutex> lock(sharedMemmoryMutex);
                 if (!sharedMemmoryGlobalMutex || !fileMapping || !mapView) return false;
@@ -87,7 +88,7 @@ namespace Utils
                 {
                     if (!FlushViewOfFile(mapView, 0))
                     {
-                        LOGGER_THIS_LOG() << "Error refrescando datos de " << name << ": " << GetLastError();
+                        LOGGER_THIS_LOG_INFO() << "ERROR refrescando datos de " << name << ": " << GetLastError();
                         result = false;
                     }
                 }
@@ -110,7 +111,11 @@ namespace Utils
 
             bool createGlobalMutex(bool isOwner)
             {
-                if (name.empty()) return false;
+                if (name.empty())
+                {
+                    LOGGER_THIS_LOG_INFO() << "Nombre de memoria compartida NO valido";
+                    return false;
+                }
                 
                 std::lock_guard<std::recursive_mutex> lock(sharedMemmoryMutex);
                 if (sharedMemmoryGlobalMutex) return true;
@@ -121,7 +126,7 @@ namespace Utils
                                                      , mutexName.c_str());
                 if (!sharedMemmoryGlobalMutex)
                 {
-                    LOGGER_THIS_LOG() << "Error creando mutex global " << name << ": " << GetLastError();
+                    LOGGER_THIS_LOG_INFO() << "ERROR creando mutex global " << name << ": " << GetLastError();
                     return false;
                 }
 
@@ -130,10 +135,18 @@ namespace Utils
 
             bool createFileMapping()
             {
-                if (name.empty()) return false;
+                if (name.empty())
+                {
+                    LOGGER_THIS_LOG_INFO() << "Nombre de memoria compartida NO valido";
+                    return false;
+                }
                 
                 std::lock_guard<std::recursive_mutex> lock(sharedMemmoryMutex);
-                if (!sharedMemmoryGlobalMutex) return false;
+                if (!sharedMemmoryGlobalMutex)
+                {
+                    LOGGER_THIS_LOG_INFO() << "Mutex NO valido";
+                    return false;
+                }
                 if (fileMapping) return true;
 
                 // Creamos la memoria compartida
@@ -147,7 +160,7 @@ namespace Utils
                                               , fileMapName.c_str());
                 if (!fileMapping)
                 {
-                    LOGGER_THIS_LOG() << "Error creando espacio de memoria compartido " << name << ": " << GetLastError();
+                    LOGGER_THIS_LOG_INFO() << "ERROR creando espacio de memoria compartido " << name << ": " << GetLastError();
                     return false;
                 }
 
@@ -159,7 +172,11 @@ namespace Utils
                 if (name.empty()) return false;
 
                 std::lock_guard<std::recursive_mutex> lock(sharedMemmoryMutex);
-                if (!sharedMemmoryGlobalMutex) return false;
+                if (!sharedMemmoryGlobalMutex)
+                {
+                    LOGGER_THIS_LOG_INFO() << "Mutex NO valido";
+                    return false;
+                }
                 if (fileMapping) return true;
 
                 // Obtenemos la memoria compartida
@@ -169,7 +186,7 @@ namespace Utils
                                             , fileMapName.c_str());
                 if (!fileMapping)
                 {
-                    LOGGER_THIS_LOG() << "Error abriendo espacio de memoria compartido " << name << ": " << GetLastError();
+                    LOGGER_THIS_LOG_INFO() << "ERROR abriendo espacio de memoria compartido " << name << ": " << GetLastError();
                     return false;
                 }
 
@@ -181,7 +198,16 @@ namespace Utils
                 if (name.empty()) return false;
 
                 std::lock_guard<std::recursive_mutex> lock(sharedMemmoryMutex);
-                if (!sharedMemmoryGlobalMutex || !fileMapping) return false;
+                if (!sharedMemmoryGlobalMutex)
+                {
+                    LOGGER_THIS_LOG_INFO() << "Mutex NO valido";
+                    return false;
+                }
+                if (!fileMapping)
+                {
+                    LOGGER_THIS_LOG_INFO() << "FileMap NO valido";
+                    return false;
+                }
                 if (mapView) return true;
 
                 // Obtenemos el map view
@@ -193,15 +219,15 @@ namespace Utils
                                                     , 0);
                 if (!mapViewAddress)
                 {
-                    LOGGER_THIS_LOG() << "Error obteniendo map view de " << name << ": " << GetLastError();
+                    LOGGER_THIS_LOG_INFO() << "ERROR obteniendo map view de " << name << ": " << GetLastError();
                     return false;
                 }
 
                 mapView = static_cast<T*>(mapViewAddress);
                 if (!mapView)
                 {
-                    LOGGER_THIS_LOG() << "Error traduciendo map view de " << name << ": " << GetLastError();
-                    if (!UnmapViewOfFile(mapViewAddress)) LOGGER_THIS_LOG() << "Error cerrando map view de " << name << ": " << GetLastError();
+                    LOGGER_THIS_LOG_INFO() << "ERROR traduciendo map view de " << name << ": " << GetLastError();
+                    if (!UnmapViewOfFile(mapViewAddress)) LOGGER_THIS_LOG_INFO() << "ERROR cerrando map view de " << name << ": " << GetLastError();
                     return false;
                 }
 
@@ -211,12 +237,16 @@ namespace Utils
             bool getOwnership(DWORD timeout)
             {
                 std::lock_guard<std::recursive_mutex> lock(sharedMemmoryMutex);
-                if (!sharedMemmoryGlobalMutex) return false;
+                if (!sharedMemmoryGlobalMutex)
+                {
+                    LOGGER_THIS_LOG_INFO() << "Mutex NO valido";
+                    return false;
+                }
                 
                 switch (WaitForSingleObject(sharedMemmoryGlobalMutex, timeout))
                 {
                     case WAIT_ABANDONED:
-                        LOGGER_THIS_LOG() << "Posible error en la integridad de los datos detectado en memoria compartida " << name;
+                        LOGGER_THIS_LOG_INFO() << "Posible error en la integridad de los datos detectado en memoria compartida " << name;
                     case WAIT_OBJECT_0:
                         break;
                     
@@ -224,7 +254,7 @@ namespace Utils
                         return false;
 
                     default:
-                        LOGGER_THIS_LOG() << "Error obteniendo propiedad de memoria compartida " << name << ": " << GetLastError();
+                        LOGGER_THIS_LOG_INFO() << "ERROR obteniendo propiedad de memoria compartida " << name << ": " << GetLastError();
                         return false;
                 }
 
@@ -234,11 +264,15 @@ namespace Utils
             bool releaseOwnership()
             {
                 std::lock_guard<std::recursive_mutex> lock(sharedMemmoryMutex);
-                if (!sharedMemmoryGlobalMutex) return false;
+                if (!sharedMemmoryGlobalMutex)
+                {
+                    LOGGER_THIS_LOG_INFO() << "Mutex NO valido";
+                    return false;
+                }
 
                 if (!ReleaseMutex(sharedMemmoryGlobalMutex))
                 {
-                    LOGGER_THIS_LOG() << "Error liberando propiedad de mutex global en memoria compartida " << name;
+                    LOGGER_THIS_LOG_INFO() << "ERROR liberando propiedad de mutex global en memoria compartida " << name;
                     return false;
                 }
 
@@ -251,19 +285,19 @@ namespace Utils
 
                 if (mapView)
                 {
-                    if (!UnmapViewOfFile(mapView)) LOGGER_THIS_LOG() << "Error cerrando map view de " << name << ": " << GetLastError();
+                    if (!UnmapViewOfFile(mapView)) LOGGER_THIS_LOG_INFO() << "ERROR cerrando map view de " << name << ": " << GetLastError();
                     mapView = nullptr;
                 }
 
                 if (fileMapping)
                 {
-                    if (!CloseHandle(fileMapping)) LOGGER_THIS_LOG() << "Error cerrando espacio de memoria compartido " << name << ": " << GetLastError();
+                    if (!CloseHandle(fileMapping)) LOGGER_THIS_LOG_INFO() << "ERROR cerrando espacio de memoria compartido " << name << ": " << GetLastError();
                     fileMapping = nullptr;
                 }
 
                 if (sharedMemmoryGlobalMutex)
                 {
-                    if (!CloseHandle(sharedMemmoryGlobalMutex)) LOGGER_THIS_LOG() << "Error cerrando mutex global " << name << ": " << GetLastError();
+                    if (!CloseHandle(sharedMemmoryGlobalMutex)) LOGGER_THIS_LOG_INFO() << "ERROR cerrando mutex global " << name << ": " << GetLastError();
                     sharedMemmoryGlobalMutex = nullptr;
                 }
             }

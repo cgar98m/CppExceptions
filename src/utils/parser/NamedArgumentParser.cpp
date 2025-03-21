@@ -9,7 +9,7 @@ namespace Parser
     // NamedArgumentParser  //
     //////////////////////////
 
-    NamedArgumentParser::NamedArgumentParser(const ArgumentHeaders& validArgs)
+    NamedArgumentParser::NamedArgumentParser(const ArgumentHeaders &validArgs)
         : validArgs(validArgs)
     {
     }
@@ -33,7 +33,7 @@ namespace Parser
             // Coincide con alguna cabecera?
             std::string argName(args[idx]);
             auto itArg = std::find_if(validArgs.begin(), validArgs.end(),
-                [argName](const auto& validArg) -> bool
+                [argName](const auto &validArg) -> bool
                 { return argName.compare(validArg.argName) == 0; });
             if (itArg == validArgs.end()) continue;
 
@@ -87,25 +87,25 @@ namespace Parser
         }
     }
 
-    NamedArgumentParser::ArgumentValue NamedArgumentParser::getValue(const ArgumentHeader& arg_header)
+    NamedArgumentParser::ArgumentValue NamedArgumentParser::getValue(const ArgumentHeader &arg_header)
     {
         std::lock_guard<std::mutex> lock(argMutex);
 
         auto itArg = std::find_if(parsedArgs.begin(), parsedArgs.end(),
-            [arg_header](const ArgumentPair& arg)
+            [arg_header](const ArgumentPair &arg)
             { return arg.first == arg_header; } );
         if (itArg == parsedArgs.end()) return ArgumentValue();
 
         return itArg->second;
     }
     
-    bool operator<(const NamedArgumentParser::ArgumentHeader& lhs, const NamedArgumentParser::ArgumentHeader& rhs)
+    bool operator<(const NamedArgumentParser::ArgumentHeader &lhs, const NamedArgumentParser::ArgumentHeader &rhs)
     {
         return lhs.argType < rhs.argType ||
                lhs.argType == rhs.argType && lhs.argName.compare(rhs.argName) <= 0;
     }
     
-    bool operator==(const NamedArgumentParser::ArgumentHeader& lhs, const NamedArgumentParser::ArgumentHeader& rhs)
+    bool operator==(const NamedArgumentParser::ArgumentHeader &lhs, const NamedArgumentParser::ArgumentHeader &rhs)
     {
         return lhs.argType == rhs.argType && lhs.argName.compare(rhs.argName) == 0;
     }

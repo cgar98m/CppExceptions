@@ -27,16 +27,18 @@ add_executable(CppExceptions
     "${PROJECT_SOURCE_DIR}/src/CppExceptions.cpp"
     "${PROJECT_SOURCE_DIR}/src/error/Exception.cpp"
     "${PROJECT_SOURCE_DIR}/src/error/MsvcException.cpp"
-    "${PROJECT_SOURCE_DIR}/src/logger/ConsoleLogger.cpp"
-    "${PROJECT_SOURCE_DIR}/src/logger/FileLogger.cpp"
-    "${PROJECT_SOURCE_DIR}/src/logger/ILogger.cpp"
-    "${PROJECT_SOURCE_DIR}/src/logger/IThreadedLogger.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/Program.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/Thread.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/filesystem/FileTools.cpp"
+    "${PROJECT_SOURCE_DIR}/src/utils/library/DllManager.cpp"
+    "${PROJECT_SOURCE_DIR}/src/utils/logging/BasicLogger.cpp"
+    "${PROJECT_SOURCE_DIR}/src/utils/logging/ConsoleLogger.cpp"
+    "${PROJECT_SOURCE_DIR}/src/utils/logging/FileLogger.cpp"
+    "${PROJECT_SOURCE_DIR}/src/utils/logging/ILogger.cpp"
+    "${PROJECT_SOURCE_DIR}/src/utils/logging/IThreadedLogger.cpp"
+    "${PROJECT_SOURCE_DIR}/src/utils/logging/LogTypes.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/parser/NamedArgumentParser.cpp"
-    "${PROJECT_SOURCE_DIR}/src/utils/parser/ParsedArgument.cpp"
-    "${PROJECT_SOURCE_DIR}/src/utils/library/DllManager.cpp")
+    "${PROJECT_SOURCE_DIR}/src/utils/parser/ParsedArgument.cpp")
 target_include_directories(CppExceptions PUBLIC "${PROJECT_SOURCE_DIR}/include/")
 target_link_libraries(CppExceptions PUBLIC dbghelp)
 
@@ -45,12 +47,14 @@ add_executable(CppExceptionsAnalysis
     "${PROJECT_SOURCE_DIR}/src/CppExceptionsAnalysis.cpp"
     "${PROJECT_SOURCE_DIR}/src/error/Exception.cpp"
     "${PROJECT_SOURCE_DIR}/src/error/MsvcException.cpp"
-    "${PROJECT_SOURCE_DIR}/src/logger/ConsoleLogger.cpp"
-    "${PROJECT_SOURCE_DIR}/src/logger/FileLogger.cpp"
-    "${PROJECT_SOURCE_DIR}/src/logger/ILogger.cpp"
-    "${PROJECT_SOURCE_DIR}/src/logger/IThreadedLogger.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/Thread.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/filesystem/FileTools.cpp"
-    "${PROJECT_SOURCE_DIR}/src/utils/library/DllManager.cpp")
+    "${PROJECT_SOURCE_DIR}/src/utils/library/DllManager.cpp"
+    "${PROJECT_SOURCE_DIR}/src/utils/logging/BasicLogger.cpp"
+    "${PROJECT_SOURCE_DIR}/src/utils/logging/ConsoleLogger.cpp"
+    "${PROJECT_SOURCE_DIR}/src/utils/logging/FileLogger.cpp"
+    "${PROJECT_SOURCE_DIR}/src/utils/logging/ILogger.cpp"
+    "${PROJECT_SOURCE_DIR}/src/utils/logging/IThreadedLogger.cpp"
+    "${PROJECT_SOURCE_DIR}/src/utils/logging/LogTypes.cpp")
     target_include_directories(CppExceptionsAnalysis PUBLIC "${PROJECT_SOURCE_DIR}/include/")
 target_link_libraries(CppExceptionsAnalysis PUBLIC dbghelp)

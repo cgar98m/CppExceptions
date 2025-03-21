@@ -1,6 +1,6 @@
-#include "logger/IThreadedLogger.h"
+#include "utils/logging/IThreadedLogger.h"
 
-namespace Logger
+namespace Utils
 {
     ////////////////////////////////////////////////////////////////
     // Interfaz de un logger que gestiona los mensajes en un hilo //
@@ -10,12 +10,13 @@ namespace Logger
     const DWORD IThreadedLogger::TIMEOUT_MS_LOOP_WAIT  = 0;
     const DWORD IThreadedLogger::TIMEOUT_MS_PRINT_WAIT = 1000;
     
-    IThreadedLogger::IThreadedLogger()
+    IThreadedLogger::IThreadedLogger(const Logger& errorLogger)
         : ILogger()
         , SafeThread()
         , printThread(*this
-                    , { THREAD_PRIORITY_NORMAL, TIMEOUT_MS_LOOP_WAIT, TIMEOUT_MS_STOP_WAIT }
-                    , BasicLogger::getInstance())
+                    , ThreadHolder::Params{THREAD_PRIORITY_NORMAL, TIMEOUT_MS_LOOP_WAIT, TIMEOUT_MS_STOP_WAIT}
+                    , errorLogger)
+        , printQueue(errorLogger)
     {
     }
 
@@ -23,11 +24,6 @@ namespace Logger
     {
         if (!printThread.run()) return false;
         return printQueue.push(message);
-    }
-
-    bool IThreadedLogger::printEnqueued(const LogMsg &message)
-    {
-        return false;
     }
 
     Error::ExitCode IThreadedLogger::worker()
@@ -47,8 +43,8 @@ namespace Logger
                 return Error::ExitCode::EXIT_CODE_KO;
         }
 
-        if (!printEnqueued(message)) return Error::ExitCode::EXIT_CODE_KO;
-        if (printQueue.pop(message, 0) != WAIT_OBJECT_0) return Error::ExitCode::EXIT_CODE_KO;
+        if (!printEnqueued(message) || (printQueue.pop(message, 0) != WAIT_OBJECT_0))
+            return Error::ExitCode::EXIT_CODE_KO;
         return Error::ExitCode::EXIT_CODE_OK;
     }
 };

@@ -1,17 +1,16 @@
 #include "Config.h"
 #include "error/Exception.h"
 #include "error/Types.h"
-#include "logger/ConsoleLogger.h"
-#include "logger/FileLogger.h"
 #include "utils/filesystem/FileTools.h"
+#include "utils/logging/FileLogger.h"
 
 int main(int argc, char **argv)
 {
-    Logger::Logger logger = Logger::FileLogger::getInstance("DumpAnalysis", Utils::FileTools::OUTPUT_PATH);
+    Utils::Logger logger = Utils::FileLogger::getInstance("DumpAnalysis", Utils::FileTools::OUTPUT_PATH);
 
     if (!CONFIG_EXTERNALIZE_DUMPS)
     {
-        LOGGER_LOG(logger) << "No se puede ejecutar el programa";
+        LOGGER_LOG_INFO(logger) << "No se puede ejecutar el programa";
         return static_cast<int>(Error::ExitCode::EXIT_CODE_NOT_IMPLEMENTED);
     }
 
@@ -21,14 +20,14 @@ int main(int argc, char **argv)
     Error::ExternalExceptionManager externalExceptionManager(false, logger);
     if (!externalExceptionManager.isValid())
     {
-        LOGGER_LOG(logger) << "Error creando manejador de excepciones externas";
+        LOGGER_LOG_INFO(logger) << "ERROR creando manejador de excepciones externas";
         return static_cast<int>(Error::ExitCode::EXIT_CODE_KO);
     }
 
     // Recibimos los datos de la excepcion y la manejamos
     if (!externalExceptionManager.receiveException())
     {
-        LOGGER_LOG(logger) << "Error procesando excepcion";
+        LOGGER_LOG_INFO(logger) << "ERROR procesando excepcion";
         return static_cast<int>(Error::ExitCode::EXIT_CODE_KO);
     }
 

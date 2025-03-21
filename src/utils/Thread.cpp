@@ -55,7 +55,7 @@ namespace Utils
     const DWORD ThreadHolder::TIMEOUT_MS_STOP_WAIT = 5000;
     const DWORD ThreadHolder::TIMEOUT_MS_LOOP_WAIT = 100;
 
-    ThreadHolder::ThreadHolder(Thread &thread, const Params& params, const Logger::Logger& logger)
+    ThreadHolder::ThreadHolder(Thread &thread, const Params& params, const Utils::Logger& logger)
         : ILoggerHolder(logger)
         , thread(thread)
         , params(params)
@@ -77,7 +77,7 @@ namespace Utils
         HANDLE threadHandle = CreateThread(nullptr, 0, threadWrapper, this, CREATE_SUSPENDED, &threadId);
         if (!threadHandle)
         {
-            LOGGER_THIS_LOG() << "Error creando hilo: " << GetLastError();
+            LOGGER_THIS_LOG_INFO() << "ERROR creando hilo: " << GetLastError();
             return false;
         }
 
@@ -87,14 +87,14 @@ namespace Utils
 
         // Asignamos prioridad
         if (!SetThreadPriority(threadHandle, params.threadPriority))
-            LOGGER_THIS_LOG() << "Error especificando prioridad: " << GetLastError();
+            LOGGER_THIS_LOG_INFO() << "ERROR especificando prioridad: " << GetLastError();
         
         // Reanudamos el thread
         thread.setRunning(true);
         if (ResumeThread(threadHandle) == static_cast<DWORD>(-1))
         {
             thread.setRunning(false);
-            LOGGER_THIS_LOG() << "Error reanudando ejecucion: " << GetLastError() << ". Forzamos el cierre del hilo...";
+            LOGGER_THIS_LOG_INFO() << "ERROR reanudando ejecucion: " << GetLastError() << ". Forzamos el cierre del hilo...";
             stop();
             return false;
         }
@@ -135,12 +135,12 @@ namespace Utils
                 break;
                 
             case WAIT_TIMEOUT:
-                LOGGER_THIS_LOG() << "Timeout esperando finalizacion del hilo [" << threadId << "]. Forzando cerrado...";
+                LOGGER_THIS_LOG_INFO() << "Timeout esperando finalizacion del hilo [" << threadId << "]. Forzando cerrado...";
                 break;
                 
             case WAIT_FAILED:
             default:
-                LOGGER_THIS_LOG() << "Error finalizando el hilo [" << threadId << "]: " << GetLastError() << ". Forzando cerrado...";
+                LOGGER_THIS_LOG_INFO() << "ERROR finalizando el hilo [" << threadId << "]: " << GetLastError() << ". Forzando cerrado...";
                 break;
         }
 
@@ -150,7 +150,7 @@ namespace Utils
         {
             if (!TerminateThread(threadHandle, static_cast<DWORD>(Error::ExitCode::EXIT_CODE_TERMINATE)))
             {
-                LOGGER_THIS_LOG() << "Error forzando cierre de hilo [" << threadId << "]";
+                LOGGER_THIS_LOG_INFO() << "ERROR forzando cierre de hilo [" << threadId << "]";
                 resultadoTerminate = false;
             }
         }

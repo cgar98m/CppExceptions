@@ -1,12 +1,12 @@
 #include <windows.h>
 #include "error/Exception.h"
-#include "logger/ConsoleLogger.h"
 #include "utils/Program.h"
+#include "utils/logging/ConsoleLogger.h"
 
 int main(int argc, char **argv)
 {
     // Obtenemos el logger
-    Logger::Logger logger = Logger::ConsoleLogger::getInstance();
+    Utils::Logger logger = Utils::ConsoleLogger::getInstance();
 
     // Instanciamos el programa
     Utils::Main program(logger);

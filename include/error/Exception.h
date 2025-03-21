@@ -5,24 +5,12 @@
 #include <memory>
 #include <mutex>
 #include <string>
-
-namespace Logger
-{
-    class ILogger;
-    class ILoggerHolder;
-    using Logger = std::shared_ptr<ILogger>;
-};
-
-namespace Utils
-{
-    class Thread;
-};
-
 #include "error/MsvcException.h"
 #include "error/Types.h"
-#include "logger/ILogger.h"
 #include "utils/Thread.h"
 #include "utils/ipc/SharedMemory.hpp"
+#include "utils/logging/BasicLogger.h"
+#include "utils/logging/ILogger.h"
 
 namespace Error
 {
@@ -38,11 +26,11 @@ namespace Error
     };
     
     // Manejar de excepciones de distintos procesos
-    class ExternalExceptionManager: public Logger::ILoggerHolder
+    class ExternalExceptionManager: public Utils::ILoggerHolder
     {
         private:
-            static const std::string MANAGER_NAME;
-            static const std::string EXTERNAL_APP_NAME;
+            static const char *MANAGER_NAME;
+            static const char *EXTERNAL_APP_NAME;
 
             static const DWORD EXTERNAL_APP_WAIT_INTERVAL;
             static const DWORD EXTERNAL_APP_ANALYSIS_TIME;
@@ -59,7 +47,7 @@ namespace Error
             std::recursive_mutex analysisMutex;
 
         public:
-            ExternalExceptionManager(bool isSender = true, const Logger::Logger& logger = Logger::BasicLogger::getInstance());
+            ExternalExceptionManager(bool isSender = true, const Utils::Logger& logger = Utils::BasicLogger::getInstance());
             ExternalExceptionManager(const ExternalExceptionManager&) = delete;
             ExternalExceptionManager& operator=(const ExternalExceptionManager&) = delete;
             virtual ~ExternalExceptionManager();
@@ -85,14 +73,14 @@ namespace Error
     class ExceptionManager
     {
         private:
-            static const std::string DUMP_DLL_NAME;
-            static const std::string DUMP_FUNC_MINIDUMP;
+            static const char *DUMP_DLL_NAME;
+            static const char *DUMP_FUNC_MINIDUMP;
 
             static std::unique_ptr<ExternalExceptionManager> externalExceptionManager;
             static std::recursive_mutex                      externalizeMutex;
 
-            static Logger::Logger logger;
-            static std::mutex     loggerMutex;
+            static Utils::Logger logger;
+            static std::mutex    loggerMutex;
 
             static bool       firstException;
             static std::mutex firstExceptionMutex;
@@ -103,7 +91,7 @@ namespace Error
             const std::terminate_handler       topTerminateHandler = nullptr;
 
         public:
-            ExceptionManager(bool isGlobal = false, bool externalize = false, const Logger::Logger& logger = Logger::BasicLogger::getInstance());
+            ExceptionManager(bool isGlobal = false, bool externalize = false, const Utils::Logger& logger = Utils::BasicLogger::getInstance());
             ExceptionManager& operator=(const ExceptionManager&) = delete;
             virtual ~ExceptionManager();
 

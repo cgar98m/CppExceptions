@@ -4,7 +4,8 @@
 #include <atomic>
 #include <mutex>
 #include "error/Types.h"
-#include "logger/ILogger.h"
+#include "utils/logging/BasicLogger.h"
+#include "utils/logging/ILogger.h"
 
 namespace Utils
 {
@@ -38,7 +39,7 @@ namespace Utils
     };
 
     // Gestor de un thread
-    class ThreadHolder: public Logger::ILoggerHolder
+    class ThreadHolder: public Utils::ILoggerHolder
     {
         public:
             static const DWORD TIMEOUT_MS_STOP_WAIT;
@@ -59,7 +60,7 @@ namespace Utils
 
         public:
             ThreadHolder() = delete;
-            explicit ThreadHolder(Thread &thread, const Params &params, const Logger::Logger& logger = Logger::BasicLogger::getInstance());
+            explicit ThreadHolder(Thread &thread, const Params &params, const Utils::Logger& logger = Utils::BasicLogger::getInstance());
             ThreadHolder& operator=(const ThreadHolder&) = delete;
             virtual ~ThreadHolder();
 

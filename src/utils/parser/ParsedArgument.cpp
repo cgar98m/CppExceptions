@@ -60,7 +60,7 @@ namespace Parser
     {
     }
 
-    StringArgumentValue::StringArgumentValue(const std::string& stringValue)
+    StringArgumentValue::StringArgumentValue(const std::string &stringValue)
         : IArgumentValue(STRING_ARGUMENT)
         , stringValue(stringValue)
     {
@@ -71,7 +71,7 @@ namespace Parser
         return stringValue;
     }
 
-    void StringArgumentValue::value(const std::string& newStringValue)
+    void StringArgumentValue::value(const std::string &newStringValue)
     {
         stringValue = newStringValue;
     }

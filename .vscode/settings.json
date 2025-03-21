@@ -72,7 +72,8 @@
         "ranges": "cpp",
         "span": "cpp",
         "queue": "cpp",
-        "fstream": "cpp"
+        "fstream": "cpp",
+        "*.rh": "cpp"
     },
     "cmake.configureSettings": {
         "EXTERNALIZE_DUMPS_DEFINE": true

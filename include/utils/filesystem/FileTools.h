@@ -8,10 +8,9 @@ namespace Utils
     class FileTools
     {
         public:
-            static const std::string OUTPUT_PATH;
+            static const char *OUTPUT_PATH;
 
         public:
-            static std::string getAbsolutePath(const std::string& relativePath);
-            static bool createFile(const std::string& filePath);
+            static std::string getAbsolutePath(const std::string &relativePath);
     };
 };

@@ -31,14 +31,14 @@ namespace Parser
 
         public:
             NamedArgumentParser() = delete;
-            explicit NamedArgumentParser(const ArgumentHeaders& validArgs);
-            NamedArgumentParser& operator=(const NamedArgumentParser&) = delete;
+            explicit NamedArgumentParser(const ArgumentHeaders &validArgs);
+            NamedArgumentParser &operator=(const NamedArgumentParser&) = delete;
             ~NamedArgumentParser() = default;
             
             void feed(int totalArgs, char **args);
             ArgumentValue getValue(const ArgumentHeader& argHeader);
     };
 
-    bool operator<(const NamedArgumentParser::ArgumentHeader& lhs, const NamedArgumentParser::ArgumentHeader& rhs);
-    bool operator==(const NamedArgumentParser::ArgumentHeader& lhs, const NamedArgumentParser::ArgumentHeader& rhs);
+    bool operator<(const NamedArgumentParser::ArgumentHeader &lhs, const NamedArgumentParser::ArgumentHeader &rhs);
+    bool operator==(const NamedArgumentParser::ArgumentHeader &lhs, const NamedArgumentParser::ArgumentHeader &rhs);
 };

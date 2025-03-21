@@ -1,12 +1,15 @@
 #pragma once
 
 #include <windows.h>
-#include <string>
 #include "error/Exception.h"
+#include "error/Types.h"
 #include "utils/Thread.h"
 #include "utils/container/SemaphoredQueue.hpp"
+#include "utils/logging/BasicLogger.h"
+#include "utils/logging/ILogger.h"
+#include "utils/logging/LogTypes.h"
 
-namespace Logger
+namespace Utils
 {
     // Interfaz de un logger que gestiona los mensajes en un hilo
     class IThreadedLogger: public ILogger, public Error::SafeThread
@@ -20,7 +23,7 @@ namespace Logger
             Utils::SemaphoredQueue<LogMsg> printQueue;
 
         public:
-            IThreadedLogger();
+            IThreadedLogger(const Logger& errorLogger);
             IThreadedLogger(const IThreadedLogger&) = delete;
             IThreadedLogger& operator=(const IThreadedLogger&) = delete;
             virtual ~IThreadedLogger() = default;
@@ -28,7 +31,7 @@ namespace Logger
             bool print(const LogMsg &message) final;
 
         private:
-            virtual bool printEnqueued(const LogMsg &message);
+            virtual bool printEnqueued(const LogMsg &message) = 0;
 
             Error::ExitCode worker() final;
     };

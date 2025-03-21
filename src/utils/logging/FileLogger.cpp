@@ -1,58 +1,77 @@
-#include "logger/FileLogger.h"
+#include "utils/logging/FileLogger.h"
 
 #include <algorithm>
 #include <iomanip>
 #include <sstream>
 #include "utils/filesystem/FileTools.h"
 
-namespace Logger
+namespace Utils
 {
     ////////////////////////////
     // Logger para un fichero //
     ////////////////////////////
 
-    const std::string FileLogger::MUX_PREFIX  = "Logger/FileMutex";
-    const DWORD       FileLogger::MUX_TIMEOUT = 1000;
+    const char  *FileLogger::MUX_NAME   = "Utils/Logging/FileMutex";
+    const DWORD FileLogger::MUX_TIMEOUT = 1000;
     
     FileLogger::LoggerMap FileLogger::fileLoggers;
-    std::mutex            FileLogger::muxInstance;
+    std::mutex            FileLogger::instanceMux;
 
-    Logger FileLogger::getInstance(const std::string& fileBaseName, const std::string& fileDir)
+    Logger FileLogger::getInstance(const std::string &fileBaseName, const std::string &fileDir, const Logger& errorLogger)
     {
+        // Obtenemos la ruta del logger
         Logger logger;
-        if (fileBaseName.empty()) return logger;
+        if (fileBaseName.empty())
+        {
+            LOGGER_LOG_INFO(errorLogger) << "Nombre de fichero NO valido";
+            return logger;
+        }
         
         std::string loggerPath = Utils::FileTools::getAbsolutePath(fileDir);
-        if (loggerPath.empty()) return logger;
+        if (loggerPath.empty())
+        {
+            LOGGER_LOG_INFO(errorLogger) << "Ruta de fichero NO valida: " << GetLastError();
+            return logger;
+        }
 
         std::string filePath = loggerPath + fileBaseName;
 
-        std::lock_guard<std::mutex> lock(muxInstance);
+        // Obtenemos la instancia asociada al fichero
+        std::lock_guard<std::mutex> lock(instanceMux);
         if (fileLoggers.find(filePath) == fileLoggers.end())
         {
-            logger.reset(new FileLogger(fileBaseName, loggerPath));
+            logger.reset(new FileLogger(fileBaseName, loggerPath, errorLogger));
             if (logger) fileLoggers[filePath] = logger;
+        }
+        else
+        {
+            logger = fileLoggers[filePath];   
         }
         return logger;
     }
 
     FileLogger::~FileLogger()
     {
-        std::lock_guard<std::mutex> lockPrint(printMutexMux);
-        if (printMutex) CloseHandle(printMutex);
+        std::lock_guard<std::mutex> lockPrint(internalMux);
+        if (ostreamMux)
+        {
+            CloseHandle(ostreamMux);
+            ostreamMux = nullptr;
+        }
 
-        std::lock_guard<std::mutex> lockLoggers(muxInstance);
+        std::lock_guard<std::mutex> lockLoggers(instanceMux);
         fileLoggers.clear();
     }
 
-    FileLogger::FileLogger(const std::string& fileBaseName, const std::string& fileDir)
-        : IThreadedLogger()
+    FileLogger::FileLogger(const std::string &fileBaseName, const std::string &fileDir, const Logger& errorLogger)
+        : IThreadedLogger(errorLogger)
+        , ILoggerHolder(errorLogger)
         , fileBaseName(fileBaseName)
         , fileDir(fileDir)
     {
-        std::string muxName = fileDir + fileBaseName;
+        std::string muxName = std::string(MUX_NAME) + std::string("/") + fileDir + fileBaseName;
         std::replace(muxName.begin(), muxName.end(), '\\', '/');
-        printMutex = CreateMutex(nullptr, FALSE, muxName.c_str());
+        ostreamMux = CreateMutex(nullptr, FALSE, muxName.c_str());
     }
 
     bool FileLogger::printEnqueued(const LogMsg &message)
@@ -61,35 +80,56 @@ namespace Logger
 
         HANDLE localPrintMutex = nullptr;
         {
-            std::lock_guard<std::mutex> lock(printMutexMux);
-            if (!printMutex) return false;
+            std::lock_guard<std::mutex> lock(internalMux);
+            if (!ostreamMux)
+            {
+                LOGGER_THIS_LOG_INFO() << "Mutex NO inicializado";
+                return false;
+            }
 
             HANDLE processHandle = GetCurrentProcess();
             if (!DuplicateHandle(processHandle
-                , printMutex
+                , ostreamMux
                 , processHandle
                 , &localPrintMutex
                 , 0
                 , FALSE
                 , DUPLICATE_SAME_ACCESS))
+            {
+                LOGGER_THIS_LOG_INFO() << "Mutex NO duplicado: " << GetLastError();
+                return false;
+            }
+        }
+        if (!localPrintMutex)
+        {
+            LOGGER_THIS_LOG_INFO() << "Mutex NO valido";
             return false;
         }
-        if (!localPrintMutex) return false;
 
-        if (WaitForSingleObject(localPrintMutex, MUX_TIMEOUT) != WAIT_OBJECT_0) return false;
+        DWORD waitResult = WaitForSingleObject(localPrintMutex, MUX_TIMEOUT);
+        if (waitResult != WAIT_OBJECT_0)
+        {
+            if (waitResult == WAIT_TIMEOUT) LOGGER_THIS_LOG_INFO() << "TIMEOUT esperando mutex";
+            else                            LOGGER_THIS_LOG_INFO() << "ERROR esperando mutex: " << GetLastError();
+            return false;
+        }
 
         // Comprobamos el file stream
         bool printResult = false;
         if (validateFileStream())
         {
-            *lastFileStream << "[" << message.processId << "]: ";
-            for (size_t idx = 0; idx < message.text.size(); idx += LOGGER_BUFFER_SIZE)
+            // Limitamos el tamano del texto
+            std::string shortenedText(message.text, 0, LOGGER_PRINT_LIMIT_SIZE);
+            
+            // Printamos el mensaje
+            for (size_t idx = 0; idx < shortenedText.size(); idx += LOGGER_PRINT_BUFFER_SIZE)
             {
-                *lastFileStream << std::string(message.text, idx, LOGGER_BUFFER_SIZE);
+                *lastFileStream << std::string(shortenedText, idx, LOGGER_PRINT_BUFFER_SIZE);
             }
             *lastFileStream << std::endl;
 
             if (lastFileStream->good()) printResult = true;
+            else                        LOGGER_THIS_LOG_INFO() << "ERROR escribiendo mensaje";
         }
 
         if (!printResult) lastFileStream.reset();
@@ -121,7 +161,11 @@ namespace Logger
 
         // Obtenemos ruta absoluta
         std::string loggerPath = Utils::FileTools::getAbsolutePath(fileDir);
-        if (loggerPath.empty()) return false;
+        if (loggerPath.empty())
+        {
+            LOGGER_THIS_LOG_INFO() << "Ruta de fichero NO valida: " << GetLastError();
+            return false;
+        }
 
         // Montamos la ruta completa
         std::stringstream ssFilePath;

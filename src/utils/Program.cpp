@@ -14,14 +14,14 @@ namespace Utils
     // Main //
     //////////
 
-    const std::string Main::ARG_ERROR_MODE = "ErrorTest";
+    const char *Main::ARG_ERROR_MODE = "ErrorTest";
 
     const Main::ArgList Main::ARG_LIST =
     {
         { { Parser::INTEGER_ARGUMENT, Main::ARG_ERROR_MODE }, false }
     };
 
-    Main::Main(const Logger::Logger& logger)
+    Main::Main(const Utils::Logger& logger)
         : ILoggerHolder(logger)
         , workMode(WorkMode::UNDEFINED)
     {
@@ -54,7 +54,7 @@ namespace Utils
     void Main::notifyVersion()
     {
         // Mostramos la versión
-        LOGGER_THIS_LOG() << "VERSION: "
+        LOGGER_THIS_LOG_INFO() << "VERSION: "
                           << std::setfill('0') << std::setw(2) << VERSION_MAJOR << "."
                           << std::setfill('0') << std::setw(2) << VERSION_MINOR;
     }
@@ -79,7 +79,7 @@ namespace Utils
             ArgValue argValue = argParser.getValue(itArg->argument);
             if (!argValue)
             {
-                LOGGER_THIS_LOG() << "Argumento " << itArg->argument.argName << ": NO identificado";
+                LOGGER_THIS_LOG_INFO() << "Argumento " << itArg->argument.argName << ": NO identificado";
                 if (itArg->required) requiredError = true;
                 continue;
             }
@@ -87,7 +87,7 @@ namespace Utils
             // Verificamos el tipo del argumento
             if (argValue->type() != itArg->argument.argType)
             {
-                LOGGER_THIS_LOG() << "Argumento " << itArg->argument.argName << ": Tipo INVALIDO";
+                LOGGER_THIS_LOG_INFO() << "Argumento " << itArg->argument.argName << ": Tipo INVALIDO";
                 if (itArg->required) requiredError = true;
                 continue;
             }
@@ -100,7 +100,7 @@ namespace Utils
                 case Parser::INTEGER_ARGUMENT:
                     if (!dynamic_cast<Parser::IntArgumentValue*>(argValue.get()))
                     {
-                        LOGGER_THIS_LOG() << "Argumento " << itArg->argument.argName << ": Tipo entero NO COHERENTE";
+                        LOGGER_THIS_LOG_INFO() << "Argumento " << itArg->argument.argName << ": Tipo entero NO COHERENTE";
                         if (itArg->required) requiredError = true;
                         continue;
                     }
@@ -109,7 +109,7 @@ namespace Utils
                 case Parser::STRING_ARGUMENT:
                     if (!dynamic_cast<Parser::StringArgumentValue*>(argValue.get()))
                     {
-                        LOGGER_THIS_LOG() << "Argumento " << itArg->argument.argName << ": Tipo string NO COHERENTE";
+                        LOGGER_THIS_LOG_INFO() << "Argumento " << itArg->argument.argName << ": Tipo string NO COHERENTE";
                         if (itArg->required) requiredError = true;
                         continue;
                     }
@@ -126,7 +126,7 @@ namespace Utils
 
         // Notificamos el valor parseado
         if (requiredError) workMode = WorkMode::UNDEFINED;
-        LOGGER_THIS_LOG() << "Modo de trabajo: " << static_cast<uint32_t>(workMode) << " - " << getWorkModeDescription(workMode);
+        LOGGER_THIS_LOG_INFO() << "Modo de trabajo: " << static_cast<uint32_t>(workMode) << " - " << getWorkModeDescription(workMode);
     }
 
     bool Main::analyzeArgument(std::string name, ArgValue argument)
@@ -160,7 +160,7 @@ namespace Utils
                         return true;
     
                     default:
-                        LOGGER_THIS_LOG() << "Argumento " << name << ": Valor NO esperado";
+                        LOGGER_THIS_LOG_INFO() << "Argumento " << name << ": Valor NO esperado";
                         return false;
                 }
             }
@@ -172,7 +172,7 @@ namespace Utils
     // Logica del programa
     Error::ExitCode Main::work()
     {
-        LOGGER_THIS_LOG() << "Inicio de la ejecucion";
+        LOGGER_THIS_LOG_INFO() << "Inicio de la ejecucion";
 
         // Gestionamos el modo de trabajo
         switch (workMode)
@@ -216,7 +216,7 @@ namespace Utils
             }
         }
         
-        LOGGER_THIS_LOG() << "Fin de la ejecucion";
+        LOGGER_THIS_LOG_INFO() << "Fin de la ejecucion";
         return Error::ExitCode::EXIT_CODE_OK;
     }
 

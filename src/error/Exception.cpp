@@ -25,14 +25,14 @@ namespace Error
     // Manejar de excepciones de distintos procesos //
     //////////////////////////////////////////////////
 
-    const std::string ExternalExceptionManager::MANAGER_NAME      = "ExternalException";
-    const std::string ExternalExceptionManager::EXTERNAL_APP_NAME = "CppExceptionsAnalysis";
+    const char *ExternalExceptionManager::MANAGER_NAME      = "ExternalException";
+    const char *ExternalExceptionManager::EXTERNAL_APP_NAME = "CppExceptionsAnalysis";
 
     const DWORD ExternalExceptionManager::EXTERNAL_APP_WAIT_INTERVAL = 5000;
     const DWORD ExternalExceptionManager::EXTERNAL_APP_ANALYSIS_TIME = 2000;
     const DWORD ExternalExceptionManager::EXTERNAL_APP_CLOSE_TIME    = 30000;
 
-    ExternalExceptionManager::ExternalExceptionManager(bool isSender, const Logger::Logger& logger)
+    ExternalExceptionManager::ExternalExceptionManager(bool isSender, const Utils::Logger& logger)
         : ILoggerHolder(logger)
         , isSender(isSender)
         , requiredDumpInfo(MANAGER_NAME, isSender, logger)
@@ -60,7 +60,7 @@ namespace Error
         std::lock_guard<std::recursive_mutex> lock(analysisMutex);
         if (!exception || !isValid()) return false;
 
-        LOGGER_THIS_LOG() << "Enviando excepcion...";
+        LOGGER_THIS_LOG_INFO() << "Enviando excepcion...";
 
         ExceptionPointers exceptionPointers(*exception);
         LimitedExceptionPointer limitedExceptionPointer;
@@ -74,14 +74,14 @@ namespace Error
             // Solicitamos una escritura a la memoria compartida
             if (!requiredDumpInfo.writeData(limitedExceptionPointer))
             {
-                LOGGER_THIS_LOG() << "Error enviando datos de excepcion";
+                LOGGER_THIS_LOG_INFO() << "ERROR enviando datos de excepcion";
                 return false;
             }
 
             // Notificamos al proceso externo
             if (!SetEvent(startOfAnalysisHandle))
             {
-                LOGGER_THIS_LOG() << "Error notificando inicio de analisis externo: " << GetLastError();
+                LOGGER_THIS_LOG_INFO() << "ERROR notificando inicio de analisis externo: " << GetLastError();
                 return false;
             }
 
@@ -92,11 +92,11 @@ namespace Error
                     break;
                 
                 case WAIT_TIMEOUT:
-                    LOGGER_THIS_LOG() << "Timeout esperando proceso de analisis externo " << EXTERNAL_APP_NAME;
+                    LOGGER_THIS_LOG_INFO() << "Timeout esperando proceso de analisis externo " << EXTERNAL_APP_NAME;
                     return false;
 
                 default:
-                    LOGGER_THIS_LOG() << "Error esperando proceso de analisis externo " << EXTERNAL_APP_NAME << ": " << GetLastError();
+                    LOGGER_THIS_LOG_INFO() << "ERROR esperando proceso de analisis externo " << EXTERNAL_APP_NAME << ": " << GetLastError();
                     return false;
             }
         }
@@ -108,15 +108,15 @@ namespace Error
                 break;
             
             case WAIT_TIMEOUT:
-                LOGGER_THIS_LOG() << "Timeout esperando fin del proceso de analisis externo " << EXTERNAL_APP_NAME;
+                LOGGER_THIS_LOG_INFO() << "Timeout esperando fin del proceso de analisis externo " << EXTERNAL_APP_NAME;
                 return false;
 
             default:
-                LOGGER_THIS_LOG() << "Error esperando fin del proceso de analisis externo " << EXTERNAL_APP_NAME << ": " << GetLastError();
+                LOGGER_THIS_LOG_INFO() << "ERROR esperando fin del proceso de analisis externo " << EXTERNAL_APP_NAME << ": " << GetLastError();
                 return false;
         }
 
-        LOGGER_THIS_LOG() << "Excepcion enviada exitosamente";
+        LOGGER_THIS_LOG_INFO() << "Excepcion enviada exitosamente";
         return true;
     }
 
@@ -125,7 +125,7 @@ namespace Error
         std::lock_guard<std::recursive_mutex> lock(analysisMutex);
         if (!isValid()) return false;
 
-        LOGGER_THIS_LOG() << "Esperando excepcion...";
+        LOGGER_THIS_LOG_INFO() << "Esperando excepcion...";
 
         // Esperamos al proceso principal
         MiniDumpRequiredInfo           miniDumpInfo;
@@ -142,20 +142,20 @@ namespace Error
                 case WAIT_TIMEOUT:
                     if (!exceptionPointers.exceptionRecords.empty())
                     {
-                        LOGGER_THIS_LOG() << "Timeout esperando proceso principal";
+                        LOGGER_THIS_LOG_INFO() << "Timeout esperando proceso principal";
                         return false;
                     }
                     break;
     
                 default:
-                    LOGGER_THIS_LOG() << "Error esperando proceso principal: " << GetLastError();
+                    LOGGER_THIS_LOG_INFO() << "ERROR esperando proceso principal: " << GetLastError();
                     return false;
             }
 
             // Solicitamos una lectura a la memoria compartida
             if (!requiredDumpInfo.readData(limitedExceptionPointer))
             {
-                LOGGER_THIS_LOG() << "Error obteniendo datos de excepcion";
+                LOGGER_THIS_LOG_INFO() << "ERROR obteniendo datos de excepcion";
                 return false;
             }
     
@@ -164,11 +164,11 @@ namespace Error
             {
                 if (!exceptionPointers.exceptionRecords.empty())
                 {
-                    LOGGER_THIS_LOG() << "Datos de excepcion no validos";
+                    LOGGER_THIS_LOG_INFO() << "Datos de excepcion no validos";
                     return false;
                 }
                 
-                LOGGER_THIS_LOG() << "No existe excepcion";
+                LOGGER_THIS_LOG_INFO() << "No existe excepcion";
                 return true;
             }
 
@@ -179,7 +179,7 @@ namespace Error
             // Notificamos al proceso principal
             if (!SetEvent(endOfAnalysisHandle))
             {
-                LOGGER_THIS_LOG() << "Error notificando fin de analisis externo: " << GetLastError();
+                LOGGER_THIS_LOG_INFO() << "ERROR notificando fin de analisis externo: " << GetLastError();
                 return false;
             }
         }
@@ -196,7 +196,7 @@ namespace Error
                                          , miniDumpInfo.processId);
         if (!processHandle)
         {
-            LOGGER_THIS_LOG() << "Error obteniendo handle del proceso";
+            LOGGER_THIS_LOG_INFO() << "ERROR obteniendo handle del proceso";
             return false;
         }
         miniDumpInfo.process = processHandle;
@@ -205,12 +205,12 @@ namespace Error
         bool noDumpError = true;
         if (!ExceptionManager::createDumpFile(miniDumpInfo))
         {
-            LOGGER_THIS_LOG() << "Error generando mini dump";
+            LOGGER_THIS_LOG_INFO() << "ERROR generando mini dump";
             noDumpError = false;
         }
         CloseHandle(processHandle);
 
-        LOGGER_THIS_LOG() << "Excepcion tratrada exitosamente";
+        LOGGER_THIS_LOG_INFO() << "Excepcion tratrada exitosamente";
         return noDumpError;
     }
 
@@ -237,7 +237,7 @@ namespace Error
         DWORD pathLength = GetModuleFileName(nullptr, exePath.data(), MAX_PATH);
         if (!pathLength)
         {
-            LOGGER_THIS_LOG() << "Error obteniendo ruta del proceso de analisis externo: " << GetLastError();
+            LOGGER_THIS_LOG_INFO() << "ERROR obteniendo ruta del proceso de analisis externo: " << GetLastError();
             return std::string();
         }
         exePath.resize(pathLength);
@@ -260,7 +260,7 @@ namespace Error
                                           , handleName.c_str());
         if (!startOfAnalysisHandle)
         {
-            LOGGER_THIS_LOG() << "Error creando evento de inicio de analisis " << MANAGER_NAME << ": " << GetLastError();
+            LOGGER_THIS_LOG_INFO() << "ERROR creando evento de inicio de analisis " << MANAGER_NAME << ": " << GetLastError();
             return false;
         }
 
@@ -271,7 +271,7 @@ namespace Error
                                         , handleName.c_str());
         if (!endOfAnalysisHandle)
         {
-            LOGGER_THIS_LOG() << "Error creando evento de fin de analisis " << MANAGER_NAME << ": " << GetLastError();
+            LOGGER_THIS_LOG_INFO() << "ERROR creando evento de fin de analisis " << MANAGER_NAME << ": " << GetLastError();
             return false;
         }
 
@@ -282,7 +282,7 @@ namespace Error
                                         , handleName.c_str());
         if (!closeAnalysisHandle)
         {
-            LOGGER_THIS_LOG() << "Error creando evento de cierre de analisis " << MANAGER_NAME << ": " << GetLastError();
+            LOGGER_THIS_LOG_INFO() << "ERROR creando evento de cierre de analisis " << MANAGER_NAME << ": " << GetLastError();
             return false;
         }
 
@@ -317,7 +317,7 @@ namespace Error
                          , &startInfo
                          , &processInfo))
         {
-            LOGGER_THIS_LOG() << "Error lanzando proceso de analisis externo " << EXTERNAL_APP_NAME << ": " << GetLastError();
+            LOGGER_THIS_LOG_INFO() << "ERROR lanzando proceso de analisis externo " << EXTERNAL_APP_NAME << ": " << GetLastError();
             return false;
         }
 
@@ -335,7 +335,7 @@ namespace Error
         if (processHandle)
         {
             if (startOfAnalysisHandle && !SetEvent(startOfAnalysisHandle))
-                LOGGER_THIS_LOG() << "Error notificando evento de fin de analisis " << MANAGER_NAME << ": " << GetLastError();
+                LOGGER_THIS_LOG_INFO() << "ERROR notificando evento de fin de analisis " << MANAGER_NAME << ": " << GetLastError();
 
             switch (WaitForSingleObject(processHandle, EXTERNAL_APP_CLOSE_TIME))
             {
@@ -343,21 +343,21 @@ namespace Error
                     break;
                 
                 case WAIT_TIMEOUT:
-                    LOGGER_THIS_LOG() << "Timeout esperando fin de proceso de analisis externo " << EXTERNAL_APP_NAME;
+                    LOGGER_THIS_LOG_INFO() << "Timeout esperando fin de proceso de analisis externo " << EXTERNAL_APP_NAME;
                     break;
 
                 default:
-                    LOGGER_THIS_LOG() << "Error esperando fin de proceso de analisis externo " << EXTERNAL_APP_NAME << ": " << GetLastError();
+                    LOGGER_THIS_LOG_INFO() << "ERROR esperando fin de proceso de analisis externo " << EXTERNAL_APP_NAME << ": " << GetLastError();
                     break;
             }
             
-            if (!CloseHandle(processHandle)) LOGGER_THIS_LOG() << "Error cerrando proceso de analisis externo " << EXTERNAL_APP_NAME << ": " << GetLastError();
+            if (!CloseHandle(processHandle)) LOGGER_THIS_LOG_INFO() << "ERROR cerrando proceso de analisis externo " << EXTERNAL_APP_NAME << ": " << GetLastError();
             processHandle = nullptr;
         }
 
         if (threadHandle)
         {
-            if (!CloseHandle(threadHandle)) LOGGER_THIS_LOG() << "Error cerrando hilo de analisis externo " << EXTERNAL_APP_NAME << ": " << GetLastError();
+            if (!CloseHandle(threadHandle)) LOGGER_THIS_LOG_INFO() << "ERROR cerrando hilo de analisis externo " << EXTERNAL_APP_NAME << ": " << GetLastError();
             threadHandle = nullptr;
         }
 
@@ -365,21 +365,21 @@ namespace Error
         if (closeAnalysisHandle)
         {
             if (!isSender && !SetEvent(closeAnalysisHandle))
-                LOGGER_THIS_LOG() << "Error notificando evento de cierre de analisis " << MANAGER_NAME << ": " << GetLastError();
+                LOGGER_THIS_LOG_INFO() << "ERROR notificando evento de cierre de analisis " << MANAGER_NAME << ": " << GetLastError();
 
-            if (!CloseHandle(closeAnalysisHandle)) LOGGER_THIS_LOG() << "Error cerrando evento de cierre de analisis " << MANAGER_NAME << ": " << GetLastError();
+            if (!CloseHandle(closeAnalysisHandle)) LOGGER_THIS_LOG_INFO() << "ERROR cerrando evento de cierre de analisis " << MANAGER_NAME << ": " << GetLastError();
             closeAnalysisHandle = nullptr;
         }
 
         if (endOfAnalysisHandle)
         {
-            if (!CloseHandle(endOfAnalysisHandle)) LOGGER_THIS_LOG() << "Error cerrando evento de fin de analisis " << MANAGER_NAME << ": " << GetLastError();
+            if (!CloseHandle(endOfAnalysisHandle)) LOGGER_THIS_LOG_INFO() << "ERROR cerrando evento de fin de analisis " << MANAGER_NAME << ": " << GetLastError();
             endOfAnalysisHandle = nullptr;
         }
 
         if (startOfAnalysisHandle)
         {
-            if (!CloseHandle(startOfAnalysisHandle)) LOGGER_THIS_LOG() << "Error cerrando evento de inicio de analisis " << MANAGER_NAME << ": " << GetLastError();
+            if (!CloseHandle(startOfAnalysisHandle)) LOGGER_THIS_LOG_INFO() << "ERROR cerrando evento de inicio de analisis " << MANAGER_NAME << ": " << GetLastError();
             startOfAnalysisHandle = nullptr;
         }
     }
@@ -396,21 +396,21 @@ namespace Error
                                            , PMINIDUMP_USER_STREAM_INFORMATION userStreamInfo
                                            , PMINIDUMP_CALLBACK_INFORMATION    callbackInfo);
 
-    const std::string ExceptionManager::DUMP_DLL_NAME      = "dbghelp.dll";
-    const std::string ExceptionManager::DUMP_FUNC_MINIDUMP = "MiniDumpWriteDump";
+    const char *ExceptionManager::DUMP_DLL_NAME      = "dbghelp.dll";
+    const char *ExceptionManager::DUMP_FUNC_MINIDUMP = "MiniDumpWriteDump";
     
     std::unique_ptr<ExternalExceptionManager> ExceptionManager::externalExceptionManager;
     std::recursive_mutex                      ExceptionManager::externalizeMutex;
 
-    Logger::Logger ExceptionManager::logger = Logger::BasicLogger::getInstance();
-    std::mutex     ExceptionManager::loggerMutex;
+    Utils::Logger ExceptionManager::logger = Utils::BasicLogger::getInstance();
+    std::mutex    ExceptionManager::loggerMutex;
 
     bool       ExceptionManager::firstException = true;
     std::mutex ExceptionManager::firstExceptionMutex;
 
     bool ExceptionManager::exceptionError = false;
 
-    ExceptionManager::ExceptionManager(bool isGlobal, bool externalize, const Logger::Logger& logger)
+    ExceptionManager::ExceptionManager(bool isGlobal, bool externalize, const Utils::Logger& logger)
         : topTerminateHandler(std::set_terminate(manageTerminate))
         , topExceptionHandler(isGlobal ? SetUnhandledExceptionFilter(manageUnhandledException) : nullptr)
     {
@@ -455,16 +455,16 @@ namespace Error
         if (exceptionError)
         {
             // Damos tiempo a que se escriban todos los logs
-            Sleep(Logger::LOGGER_FLUSH_TIMEOUT);
+            Sleep(Utils::LOGGER_FLUSH_TIMEOUT);
             std::abort();
         }
 
-        Logger::Logger tmpLogger;
+        Utils::Logger tmpLogger;
         {
             std::lock_guard<std::mutex> lock(loggerMutex);
             tmpLogger = logger;
         }
-        LOGGER_LOG(tmpLogger) << "Terminate ejecutado";
+        LOGGER_LOG_INFO(tmpLogger) << "Terminate ejecutado";
         std::exit(0);
     }
 
@@ -481,7 +481,7 @@ namespace Error
 
     bool ExceptionManager::createDumpFile(const MiniDumpRequiredInfo& requiredInfo)
     {
-        Logger::Logger tmpLogger;
+        Utils::Logger tmpLogger;
         {
             std::lock_guard<std::mutex> lock(loggerMutex);
             tmpLogger = logger;
@@ -490,7 +490,7 @@ namespace Error
         // Verificamos los datos obtenidos
         if (!requiredInfo.isValid())
         {
-            LOGGER_LOG(tmpLogger) << "Informacion para mini dump incompleta";
+            LOGGER_LOG_INFO(tmpLogger) << "Informacion para mini dump incompleta";
             return false;
         }
 
@@ -498,7 +498,7 @@ namespace Error
         std::shared_ptr<Utils::DllWrapper> dllWrapper = Utils::DllManager::getInstance(DUMP_DLL_NAME, tmpLogger);
         if (!dllWrapper || !dllWrapper->isValid())
         {
-            LOGGER_LOG(tmpLogger) << "Error cargando libreria " << DUMP_DLL_NAME;
+            LOGGER_LOG_INFO(tmpLogger) << "ERROR cargando libreria " << DUMP_DLL_NAME;
             return false;
         }
 
@@ -506,19 +506,25 @@ namespace Error
         std::shared_ptr<Utils::DllFunctionWrapper> funcWrapper = dllWrapper->getFunction(DUMP_FUNC_MINIDUMP);
         if (!funcWrapper || !funcWrapper->isValid())
         {
-            LOGGER_LOG(tmpLogger) << "Error cargando funcion " << DUMP_FUNC_MINIDUMP;
+            LOGGER_LOG_INFO(tmpLogger) << "ERROR cargando funcion " << DUMP_FUNC_MINIDUMP;
             return false;
         }
 
         MiniDumpWriteDump funcAddress = reinterpret_cast<MiniDumpWriteDump>(funcWrapper->getAddress());
         if (!funcAddress)
         {
-            LOGGER_LOG(tmpLogger) << "Error traduciendo funcion " << DUMP_FUNC_MINIDUMP;
+            LOGGER_LOG_INFO(tmpLogger) << "ERROR traduciendo funcion " << DUMP_FUNC_MINIDUMP;
             return false;
         }
         
         // Creamos el fichero
         std::string fileName = getDumpFileName();
+        if (fileName.empty())
+        {
+            LOGGER_LOG_INFO(tmpLogger) << "ERROR obteniendo nombre de fichero: " << GetLastError();
+            return false;
+        }
+
         HANDLE handleFichero = CreateFile(fileName.c_str()
                                         , GENERIC_READ | GENERIC_WRITE
                                         , FILE_SHARE_WRITE | FILE_SHARE_READ
@@ -528,7 +534,7 @@ namespace Error
                                         , nullptr);
         if (!handleFichero)
         {
-            LOGGER_LOG(tmpLogger) << "Error creando fichero " << fileName << ": " << GetLastError();
+            LOGGER_LOG_INFO(tmpLogger) << "ERROR creando fichero " << fileName << ": " << GetLastError();
             return false;
         }
 
@@ -544,7 +550,7 @@ namespace Error
             std::lock_guard<std::mutex> lock(funcWrapper->getMutex());
             if (!funcAddress(requiredInfo.process, requiredInfo.processId, handleFichero, MiniDumpNormal, &miniDumpInfo, nullptr, nullptr))
             {
-                LOGGER_LOG(tmpLogger) << "Error generando dump: " << GetLastError();
+                LOGGER_LOG_INFO(tmpLogger) << "ERROR generando dump: " << GetLastError();
                 resultado = false;
             }
         }
@@ -559,19 +565,19 @@ namespace Error
 
     LONG ExceptionManager::manageException(PEXCEPTION_POINTERS exception)
     {
-        Logger::Logger tmpLogger;
+        Utils::Logger tmpLogger;
         {
             std::lock_guard<std::mutex> lock(loggerMutex);
             tmpLogger = logger;
         }
-        LOGGER_LOG(tmpLogger) << "Excepcion detectada";
+        LOGGER_LOG_INFO(tmpLogger) << "Excepcion detectada";
      
         // Verificamos si es la primera excepcion (ignoramos el resto)
         {
             std::lock_guard<std::mutex> lock(firstExceptionMutex);
             if (!firstException)
             {
-                LOGGER_LOG(tmpLogger) << "Excepcion descartada";
+                LOGGER_LOG_INFO(tmpLogger) << "Excepcion descartada";
                 return EXCEPTION_EXECUTE_HANDLER;
             }
 
@@ -589,7 +595,7 @@ namespace Error
         // Generamos dump si es necesario
         MiniDumpRequiredInfo miniDumpInfo;
         miniDumpInfo.exception = exception;
-        if (manageLocally && !createDumpFile(miniDumpInfo)) LOGGER_LOG(tmpLogger) << "Error creando mini dump";
+        if (manageLocally && !createDumpFile(miniDumpInfo)) LOGGER_LOG_INFO(tmpLogger) << "ERROR creando mini dump";
         
         std::terminate();
         return EXCEPTION_EXECUTE_HANDLER;
@@ -597,12 +603,12 @@ namespace Error
 
     LONG ExceptionManager::manageCriticalMsvcException(PEXCEPTION_POINTERS exception)
     {
-        Logger::Logger tmpLogger;
+        Utils::Logger tmpLogger;
         {
             std::lock_guard<std::mutex> lock(loggerMutex);
             tmpLogger = logger;
         }
-        LOGGER_LOG(tmpLogger) << "Excepcion CRITICA detectada";
+        LOGGER_LOG_INFO(tmpLogger) << "Excepcion CRITICA detectada";
 
         exceptionError = true;
 
@@ -612,21 +618,22 @@ namespace Error
     
     void ExceptionManager::manageExit()
     {
-        Logger::Logger tmpLogger;
+        Utils::Logger tmpLogger;
         {
             std::lock_guard<std::mutex> lock(loggerMutex);
             tmpLogger = logger;
         }
-        LOGGER_LOG(tmpLogger) << "Exit ejecutado";
+        LOGGER_LOG_INFO(tmpLogger) << "Exit ejecutado";
 
         // Damos tiempo a que se escriban todos los logs
-        Sleep(Logger::LOGGER_FLUSH_TIMEOUT);
+        Sleep(Utils::LOGGER_FLUSH_TIMEOUT);
     }
 
     std::string ExceptionManager::getDumpFileName()
     {
         // Obtenemos la ruta del directorio
         std::string dumpDir = Utils::FileTools::getAbsolutePath(Utils::FileTools::OUTPUT_PATH);
+        if (dumpDir.empty()) return std::string();
         
         // Obtenemos la fecha
         SYSTEMTIME stNow;

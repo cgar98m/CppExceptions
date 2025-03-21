@@ -4,13 +4,14 @@
 #include <exception>
 #include <functional>
 #include "error/Types.h"
-#include "logger/ILogger.h"
+#include "utils/logging/BasicLogger.h"
+#include "utils/logging/ILogger.h"
 #include "utils/parser/NamedArgumentParser.h"
 
 namespace Utils
 {
     // Wrapper del programa principal
-    class Main: public Logger::ILoggerHolder
+    class Main: public Utils::ILoggerHolder
     {
         private:
             struct RequiredArgument
@@ -33,12 +34,12 @@ namespace Utils
             
             WorkMode workMode;
             
-            static const std::string ARG_ERROR_MODE;
+            static const char *ARG_ERROR_MODE;
 
             static const ArgList ARG_LIST;
 
         public:
-            explicit Main(const Logger::Logger& logger = Logger::BasicLogger::getInstance());
+            explicit Main(const Utils::Logger& logger = Utils::BasicLogger::getInstance());
             Main(const Main&) = delete;
             Main& operator=(const Main&) = delete;
             virtual ~Main() = default;

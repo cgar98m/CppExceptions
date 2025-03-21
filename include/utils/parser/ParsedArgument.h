@@ -57,10 +57,10 @@ namespace Parser
 
         public:
             StringArgumentValue();
-            explicit StringArgumentValue(const std::string& stringValue);
+            explicit StringArgumentValue(const std::string &stringValue);
             virtual ~StringArgumentValue() = default;
 
             std::string value(void) const;
-            void value(const std::string& newStringValue);
+            void value(const std::string &newStringValue);
     };
 };

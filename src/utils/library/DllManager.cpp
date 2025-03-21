@@ -6,14 +6,14 @@ namespace Utils
     // Wrapper de la funcion de una DLL //
     //////////////////////////////////////
 
-    DllFunctionWrapper::DllFunctionWrapper(const std::string& funcName, HMODULE module, const Logger::Logger& logger)
+    DllFunctionWrapper::DllFunctionWrapper(const std::string &funcName, HMODULE module, const Utils::Logger &logger)
         : ILoggerHolder(logger)
         , funcName(funcName)
     {
         if (funcName.empty() || !module) return;
 
         funcAddress = GetProcAddress(module, funcName.c_str());
-        if (!funcAddress) LOGGER_THIS_LOG() << "Error obteniendo direccion de " << funcName << ": " << GetLastError();
+        if (!funcAddress) LOGGER_THIS_LOG_INFO() << "ERROR obteniendo direccion de " << funcName << ": " << GetLastError();
     }
 
     bool DllFunctionWrapper::isValid() const
@@ -26,7 +26,7 @@ namespace Utils
         return funcAddress;
     }
 
-    std::mutex& DllFunctionWrapper::getMutex()
+    std::mutex &DllFunctionWrapper::getMutex()
     {
         return funcMutex;
     }
@@ -35,20 +35,20 @@ namespace Utils
     // Wrapper de una DLL //
     ////////////////////////
     
-    DllWrapper::DllWrapper(const std::string& dllName, const Logger::Logger& logger)
+    DllWrapper::DllWrapper(const std::string &dllName, const Utils::Logger &logger)
         : ILoggerHolder(logger)
         , dllName(dllName)
     {
         if (dllName.empty()) return;
 
         moduleHandle = LoadLibraryA(dllName.c_str());
-        if (!moduleHandle) LOGGER_THIS_LOG() << "Error cargando DLL " << dllName << ": " << GetLastError();
+        if (!moduleHandle) LOGGER_THIS_LOG_INFO() << "ERROR cargando DLL " << dllName << ": " << GetLastError();
     }
 
     DllWrapper::~DllWrapper()
     {
         if (!moduleHandle) return;
-        if (!FreeLibrary(moduleHandle)) LOGGER_THIS_LOG() << "Error liberando DLL " << dllName << ": " << GetLastError();
+        if (!FreeLibrary(moduleHandle)) LOGGER_THIS_LOG_INFO() << "ERROR liberando DLL " << dllName << ": " << GetLastError();
     }
 
     bool DllWrapper::isValid() const
@@ -56,7 +56,7 @@ namespace Utils
         return moduleHandle;
     }
 
-    std::shared_ptr<DllFunctionWrapper> DllWrapper::getFunction(const std::string& funcName)
+    std::shared_ptr<DllFunctionWrapper> DllWrapper::getFunction(const std::string &funcName)
     {
         if (!moduleHandle) return std::shared_ptr<DllFunctionWrapper>();
 
@@ -75,7 +75,7 @@ namespace Utils
         return funcWrapper;
     }
 
-    bool DllWrapper::deleteFunction(const std::string& funcName)
+    bool DllWrapper::deleteFunction(const std::string &funcName)
     {
         std::lock_guard<std::mutex> lock(funcMutex);
 
@@ -98,7 +98,7 @@ namespace Utils
     std::unique_ptr<DllManager> DllManager::instance;
     std::mutex                  DllManager::instanceMutex;
 
-    std::shared_ptr<DllWrapper> DllManager::getInstance(const std::string& dllName, const Logger::Logger& logger)
+    std::shared_ptr<DllWrapper> DllManager::getInstance(const std::string &dllName, const Utils::Logger &logger)
     {
         std::lock_guard<std::mutex> lock(instanceMutex);
 
@@ -110,7 +110,7 @@ namespace Utils
         return instance->getModule(dllName);
     }
 
-    bool DllManager::deleteInstance(const std::string& dllName)
+    bool DllManager::deleteInstance(const std::string &dllName)
     {
         std::lock_guard<std::mutex> lock(instanceMutex);
 
@@ -121,12 +121,12 @@ namespace Utils
         return instance->deleteModule(dllName);
     }
 
-    DllManager::DllManager(const Logger::Logger& logger)
+    DllManager::DllManager(const Utils::Logger &logger)
         : ILoggerHolder(logger)
     {
     }
 
-    std::shared_ptr<DllWrapper> DllManager::getModule(const std::string& dllName)
+    std::shared_ptr<DllWrapper> DllManager::getModule(const std::string &dllName)
     {
         std::lock_guard<std::mutex> lock(dllMutex);
 
@@ -143,7 +143,7 @@ namespace Utils
         return dllWrapper;
     }
 
-    bool DllManager::deleteModule(const std::string& dllName)
+    bool DllManager::deleteModule(const std::string &dllName)
     {
         std::lock_guard<std::mutex> lock(dllMutex);
 
