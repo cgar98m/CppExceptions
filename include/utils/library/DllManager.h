@@ -1,85 +1,62 @@
 #pragma once
 
-#include <windows.h>
 #include <map>
 #include <memory>
 #include <mutex>
 #include <string>
+#include "utils/library/DllObject.h"
 #include "utils/logging/BasicLogger.h"
 #include "utils/logging/ILogger.h"
+#include "utils/logging/LoggerHolder.h"
 
 namespace Utils
 {
-    // Wrapper de la funcion de una DLL
-    class DllFunctionWrapper: public ILoggerHolder
+    namespace Library
     {
-        private:
-            FARPROC           funcAddress = nullptr;
-            const std::string funcName;
-            std::mutex        funcMutex;
-
-        public:
-            DllFunctionWrapper() = delete;
-            DllFunctionWrapper(const std::string &funcName, HMODULE module, const Utils::Logger &logger = Utils::BasicLogger::getInstance());
-            DllFunctionWrapper(const DllFunctionWrapper&) = delete;
-            DllFunctionWrapper operator=(const DllFunctionWrapper&) = delete;
-            virtual ~DllFunctionWrapper() = default;
-
-            bool isValid() const;
-
-            FARPROC getAddress() const;
-            std::mutex &getMutex();
-    };
-
-    // Wrapper de una DLL
-    class DllWrapper: public ILoggerHolder
-    {
-        private:
-            using FuncList = std::map<std::string, std::shared_ptr<DllFunctionWrapper>>;
-
-            HMODULE           moduleHandle = nullptr;
-            const std::string dllName;
-
-            FuncList   funcList;
-            std::mutex funcMutex;
-
-        public:
-            DllWrapper() = delete;
-            DllWrapper(const std::string &dllName, const Utils::Logger &logger = Utils::BasicLogger::getInstance());
-            DllWrapper(const DllWrapper&) = delete;
-            DllWrapper operator=(const DllWrapper&) = delete;
-            virtual ~DllWrapper();
-
-            bool isValid() const;
-
-            std::shared_ptr<DllFunctionWrapper> getFunction(const std::string &funcName);
-            bool deleteFunction(const std::string &funcName);
-    };
-
-    // Manejador de librerias DLL dinamicas
-    class DllManager: public ILoggerHolder
-    {
-        private:
-            using DllList = std::map<std::string, std::shared_ptr<DllWrapper>>;
-
-            static std::unique_ptr<DllManager> instance;
-            static std::mutex                  instanceMutex;
-
-            DllList    dllList;
-            std::mutex dllMutex;
-
-        public:
-            static std::shared_ptr<DllWrapper> getInstance(const std::string &dllName, const Utils::Logger &logger = Utils::BasicLogger::getInstance());
-            static bool deleteInstance(const std::string &dllName);
+        //////////////////////////////////////////
+        // Manejador de librerias DLL dinamicas //
+        //////////////////////////////////////////
+        
+        class DllManager: public Logging::LoggerHolder
+        {
+            // Tipos, estructuras y enums
+            private:
+                using DllList          = std::map<std::string, SharedDllObject>;
+                using UniqueDllManager = std::unique_ptr<DllManager>;
+    
+            // Constructor/Destructor
+            public:
+                virtual ~DllManager() = default;
+    
+            private:
+                DllManager(const SharedLogger &logger = BASIC_LOGGER());
             
-            DllManager(const DllManager&) = delete;
-            DllManager operator=(const DllManager&) = delete;
-            virtual ~DllManager() = default;
+            // Deleted
+            public:
+                DllManager(const DllManager&)            = delete;
+                DllManager &operator=(const DllManager&) = delete;
 
-        private:
-            DllManager(const Utils::Logger &logger = Utils::BasicLogger::getInstance());
+            // Funciones de clase
+            public:
+                static SharedDllObject getInstance(const std::string &dllName, const SharedLogger &logger = BASIC_LOGGER());
+                static bool deleteInstance(const std::string &dllName);
+    
+            // Funciones miembro
+            private:
+                SharedDllObject getModule(const std::string &dllName);
+                bool deleteModule(const std::string &dllName);
 
-            std::shared_ptr<DllWrapper> getModule(const std::string &dllName);
-            bool deleteModule(const std::string &dllName);
+                std::string getUniqueDllName(const std::string &dllName);
+
+            // Variables de clase
+            private:
+                static UniqueDllManager instance;
+                static std::mutex       instanceMutex;
+    
+            // Variables miembro
+            private:
+                DllList    dllList;
+                std::mutex dllMutex;
+        };
     };
 };

@@ -1,0 +1,4 @@
+#pragma once
+
+#define NAME_MAIN_APP     "@MAIN_APP_NAME@"
+#define NAME_ANALYSIS_APP "@ANALYSIS_APP_NAME@"

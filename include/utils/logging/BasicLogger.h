@@ -2,38 +2,62 @@
 
 #include <windows.h>
 #include <mutex>
-#include <string>
 #include "utils/logging/ILogger.h"
-#include "utils/logging/LogTypes.h"
+#include "utils/logging/LogMsg.h"
+
+//////////////
+// Defines  //
+//////////////
+
+#define BASIC_LOGGER() Utils::Logging::BasicLogger::getInstance()
 
 namespace Utils
 {
-    // Interfaz de un logger por salida estandar
-    class BasicLogger: public ILogger
+    namespace Logging
     {
-        public:
-            static const char  *MUX_NAME;
-            static const DWORD MUX_TIMEOUT;
+        //////////////////////////////////
+        // Logger para salida estandar  //
+        //////////////////////////////////
 
-        private:
-            static Logger     basicLogger;
-            static std::mutex instanceMux;
+        class BasicLogger: public ILogger
+        {
+            // Constantes
+            public:
+                static const char  *MUX_NAME;
+                static const DWORD TIMEOUT_MS_MUX_WAIT;
+    
+            // Constructor/Destructor
+            public:
+                virtual ~BasicLogger();
             
-            HANDLE     ostreamMux = nullptr;
-            std::mutex internalMux;
-
-        public:
-            static Logger getInstance();
-
-            BasicLogger(const BasicLogger&) = delete;
-            BasicLogger& operator=(const BasicLogger&) = delete;
-            virtual ~BasicLogger();
+            private:
+                BasicLogger();
             
-            bool print(const LogMsg &message) final;
+            // Deleted
+            public:
+                explicit BasicLogger(const BasicLogger&)   = delete;
+                BasicLogger &operator=(const BasicLogger&) = delete;
             
-        private:
-            BasicLogger();
+            // Final virtual
+            public:
+                virtual bool printRequest(const LogMsg &message) final;
+            
+            private:
+                virtual bool processPrint(const LogMsg &message) final;
 
-            bool printEnqueued(const LogMsg &message) final;
+            // Funciones de clase
+            public:
+                static SharedLogger getInstance();
+                
+            // Variables de clase
+            private:
+                static SharedLogger basicLogger;
+                static std::mutex   instanceMux;
+                
+            // Variables miembro
+            private:
+                HANDLE     ostreamMux = nullptr;
+                std::mutex internalMux;
+        };
     };
 };

@@ -1,161 +1,102 @@
 #include "utils/library/DllManager.h"
 
+#include "utils/text/TextTools.h"
+
 namespace Utils
 {
-    //////////////////////////////////////
-    // Wrapper de la funcion de una DLL //
-    //////////////////////////////////////
-
-    DllFunctionWrapper::DllFunctionWrapper(const std::string &funcName, HMODULE module, const Utils::Logger &logger)
-        : ILoggerHolder(logger)
-        , funcName(funcName)
+    namespace Library
     {
-        if (funcName.empty() || !module) return;
+        //////////////////////////////////////////
+        // Manejador de librerias DLL dinamicas //
+        //////////////////////////////////////////
+        
+        //------------------------//
+        // Constructor/Destructor //
+        //------------------------//
 
-        funcAddress = GetProcAddress(module, funcName.c_str());
-        if (!funcAddress) LOGGER_THIS_LOG_INFO() << "ERROR obteniendo direccion de " << funcName << ": " << GetLastError();
-    }
+        DllManager::DllManager(const SharedLogger &logger)
+            : Logging::LoggerHolder(logger)
+        {
+        }
 
-    bool DllFunctionWrapper::isValid() const
-    {
-        return funcAddress;
-    }
-
-    FARPROC DllFunctionWrapper::getAddress() const
-    {
-        return funcAddress;
-    }
-
-    std::mutex &DllFunctionWrapper::getMutex()
-    {
-        return funcMutex;
-    }
-
-    ////////////////////////
-    // Wrapper de una DLL //
-    ////////////////////////
+        //--------------------//
+        // Funciones de clase //
+        //--------------------//
     
-    DllWrapper::DllWrapper(const std::string &dllName, const Utils::Logger &logger)
-        : ILoggerHolder(logger)
-        , dllName(dllName)
-    {
-        if (dllName.empty()) return;
-
-        moduleHandle = LoadLibraryA(dllName.c_str());
-        if (!moduleHandle) LOGGER_THIS_LOG_INFO() << "ERROR cargando DLL " << dllName << ": " << GetLastError();
-    }
-
-    DllWrapper::~DllWrapper()
-    {
-        if (!moduleHandle) return;
-        if (!FreeLibrary(moduleHandle)) LOGGER_THIS_LOG_INFO() << "ERROR liberando DLL " << dllName << ": " << GetLastError();
-    }
-
-    bool DllWrapper::isValid() const
-    {
-        return moduleHandle;
-    }
-
-    std::shared_ptr<DllFunctionWrapper> DllWrapper::getFunction(const std::string &funcName)
-    {
-        if (!moduleHandle) return std::shared_ptr<DllFunctionWrapper>();
-
-        std::lock_guard<std::mutex> lock(funcMutex);
-
-        // Verificamos la validez de la funcion
-        if (funcName.empty()) return std::shared_ptr<DllFunctionWrapper>();
-
-        // Comprobamos su existencia
-        if (funcList.find(funcName) != funcList.end()) return funcList[funcName];
-
-        // Buscamos la funcion
-        std::shared_ptr<DllFunctionWrapper> funcWrapper = std::make_shared<DllFunctionWrapper>(funcName, moduleHandle, getLogger());
-        if (!funcWrapper || !funcWrapper->isValid()) return std::shared_ptr<DllFunctionWrapper>();
-        funcList[funcName] = funcWrapper;
-        return funcWrapper;
-    }
-
-    bool DllWrapper::deleteFunction(const std::string &funcName)
-    {
-        std::lock_guard<std::mutex> lock(funcMutex);
-
-        // Verificamos la validez de la dll
-        if (funcName.empty()) return false;
-
-        // Comprobamos su existencia
-        auto funcIt = funcList.find(funcName);
-        if (funcIt == funcList.end()) return false;
-
-        // Eliminamos el modulo
-        funcList.erase(funcIt);
-        return true;
-    }
-
-    //////////////////////////////////////////
-    // Manejador de librerias DLL dinamicas //
-    //////////////////////////////////////////
+        SharedDllObject DllManager::getInstance(const std::string &dllName, const SharedLogger &logger)
+        {
+            std::lock_guard<std::mutex> lock(instanceMutex);
     
-    std::unique_ptr<DllManager> DllManager::instance;
-    std::mutex                  DllManager::instanceMutex;
+            // Obtenemos la instancia gestora
+            if (!instance) instance.reset(new DllManager(logger));
+            
+            // Obtenemos el modulo solicitado
+            if (!instance) return SharedDllObject();
+            return instance->getModule(dllName);
+        }
+    
+        bool DllManager::deleteInstance(const std::string &dllName)
+        {
+            std::lock_guard<std::mutex> lock(instanceMutex);
+    
+            // Obtenemos la instancia gestora
+            if (!instance) return true;
+    
+            // Descargamos el modulo
+            return instance->deleteModule(dllName);
+        }
 
-    std::shared_ptr<DllWrapper> DllManager::getInstance(const std::string &dllName, const Utils::Logger &logger)
-    {
-        std::lock_guard<std::mutex> lock(instanceMutex);
+        //--------------------//
+        // Funciones miembro  //
+        //--------------------//
 
-        // Obtenemos la instancia gestora
-        if (!instance) instance.reset(new DllManager(logger));
-        if (!instance) return std::shared_ptr<DllWrapper>();
+        SharedDllObject DllManager::getModule(const std::string &dllName)
+        {
+            SharedDllObject             dllWrapper;
+            std::lock_guard<std::mutex> lock(this->dllMutex);
+    
+            // Verificamos la validez de la dll
+            std::string uniqueDllName = getUniqueDllName(dllName);
+            if (uniqueDllName.empty()) return dllWrapper;
+    
+            // Comprobamos su existencia
+            if (this->dllList.find(uniqueDllName) != this->dllList.end()) return this->dllList[uniqueDllName];
+    
+            // Creamos el modulo
+            dllWrapper = std::make_shared<DllObject>(uniqueDllName, THIS_LOGGER());
+            if (!dllWrapper || !dllWrapper->isValid()) return SharedDllObject();
+            this->dllList[uniqueDllName] = dllWrapper;
+            return dllWrapper;
+        }
+    
+        bool DllManager::deleteModule(const std::string &dllName)
+        {
+            std::lock_guard<std::mutex> lock(this->dllMutex);
+    
+            // Verificamos la validez de la dll
+            std::string uniqueDllName = getUniqueDllName(dllName);
+            if (uniqueDllName.empty()) return true;
+    
+            // Comprobamos su existencia
+            auto dllIt = this->dllList.find(uniqueDllName);
+            if (dllIt == this->dllList.end()) return true;
+    
+            // Eliminamos el modulo
+            this->dllList.erase(dllIt);
+            return true;
+        }
 
-        // Obtenemos el modulo solicitado
-        return instance->getModule(dllName);
-    }
+        std::string DllManager::getUniqueDllName(const std::string &dllName)
+        {
+            // Pasamos el nombre a minusculas
+            return Utils::Text::TextTools::toLowerCase(dllName);
+        }
 
-    bool DllManager::deleteInstance(const std::string &dllName)
-    {
-        std::lock_guard<std::mutex> lock(instanceMutex);
+        //--------------------//
+        // Variables de clase //
+        //--------------------//
 
-        // Obtenemos la instancia gestora
-        if (!instance) return false;
-
-        // Descargamos el modulo
-        return instance->deleteModule(dllName);
-    }
-
-    DllManager::DllManager(const Utils::Logger &logger)
-        : ILoggerHolder(logger)
-    {
-    }
-
-    std::shared_ptr<DllWrapper> DllManager::getModule(const std::string &dllName)
-    {
-        std::lock_guard<std::mutex> lock(dllMutex);
-
-        // Verificamos la validez de la dll
-        if (dllName.empty()) return std::shared_ptr<DllWrapper>();
-
-        // Comprobamos su existencia
-        if (dllList.find(dllName) != dllList.end()) return dllList[dllName];
-
-        // Creamos el modulo
-        std::shared_ptr<DllWrapper> dllWrapper = std::make_shared<DllWrapper>(dllName, getLogger());
-        if (!dllWrapper || !dllWrapper->isValid()) return std::shared_ptr<DllWrapper>();
-        dllList[dllName] = dllWrapper;
-        return dllWrapper;
-    }
-
-    bool DllManager::deleteModule(const std::string &dllName)
-    {
-        std::lock_guard<std::mutex> lock(dllMutex);
-
-        // Verificamos la validez de la dll
-        if (dllName.empty()) return false;
-
-        // Comprobamos su existencia
-        auto dllIt = dllList.find(dllName);
-        if (dllIt == dllList.end()) return false;
-
-        // Eliminamos el modulo
-        dllList.erase(dllIt);
-        return true;
-    }
+        DllManager::UniqueDllManager DllManager::instance;
+        std::mutex                   DllManager::instanceMutex;
+    };
 };

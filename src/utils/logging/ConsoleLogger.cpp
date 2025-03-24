@@ -1,99 +1,74 @@
 #include "utils/logging/ConsoleLogger.h"
 
 #include <iostream>
-#include "utils/logging/BasicLogger.h"
+#include "utils/logging/LogEntry.h"
+#include "utils/logging/LogTypes.h"
 
 namespace Utils
 {
-    //////////////////////////
-    // Logger para consola  //
-    //////////////////////////
-
-    const char  *ConsoleLogger::MUX_NAME   = BasicLogger::MUX_NAME;
-    const DWORD ConsoleLogger::MUX_TIMEOUT = BasicLogger::MUX_TIMEOUT;
+    namespace Logging
+    {
+        ////////////////////////////////////////////////////////
+        // Logger para salida estandar con impresion por hilo //
+        ////////////////////////////////////////////////////////
     
-    Logger     ConsoleLogger::consoleLogger;
-    std::mutex ConsoleLogger::instanceMux;
+        //------------//
+        // Constantes //
+        //------------//
 
-    Logger ConsoleLogger::getInstance(const Logger& errorLogger)
-    {
-        std::lock_guard<std::mutex> lock(instanceMux);
-        if (!consoleLogger) consoleLogger.reset(new ConsoleLogger(errorLogger));
-        return consoleLogger;
-    }
-
-    ConsoleLogger::~ConsoleLogger()
-    {
-        std::lock_guard<std::mutex> lockPrint(internalMux);
-        if (ostreamMux)
+        const char  *ConsoleLogger::MUX_NAME           = BasicLogger::MUX_NAME;
+        const DWORD ConsoleLogger::TIMEOUT_MS_MUX_WAIT = BasicLogger::TIMEOUT_MS_MUX_WAIT;
+        const char  *ConsoleLogger::LOGGER_NAME        = "ConsoleLogger";
+    
+        //------------------------//
+        // Constructor/Destructor //
+        //------------------------//
+    
+        ConsoleLogger::ConsoleLogger(const SharedLogger &logger)
+            : IThreadedLogger(Params{THREAD_PRIORITY_NORMAL, TIMEOUT_MS_LOOP_WAIT, TIMEOUT_MS_STOP_WAIT, TIMEOUT_MS_MUX_WAIT, LOGGER_NAME}
+                            , logger)
         {
-            CloseHandle(ostreamMux);
-            ostreamMux = nullptr;
+            // Usamos el mismo nombre de mutex que el logger de salida estandar
+            this->ostreamMux = CreateMutex(nullptr, FALSE, MUX_NAME);
         }
-
-        std::lock_guard<std::mutex> lockLogger(instanceMux);
-        if (consoleLogger) consoleLogger.reset();
-    }
-
-    ConsoleLogger::ConsoleLogger(const Logger& errorLogger)
-        : IThreadedLogger(errorLogger)
-        , ILoggerHolder(errorLogger)
-        , ostreamMux(CreateMutex(nullptr, FALSE, MUX_NAME))
-    {
-    }
-
-    bool ConsoleLogger::printEnqueued(const LogMsg &message)
-    {
-        if (message.text.empty()) return true;
-
-        HANDLE localPrintMutex = nullptr;
-        {
-            std::lock_guard<std::mutex> lock(internalMux);
-            if (!ostreamMux)
-            {
-                LOGGER_THIS_LOG_INFO() << "Mutex NO inicializado";
-                return false;
-            }
-
-            HANDLE processHandle = GetCurrentProcess();
-            if (!DuplicateHandle(processHandle
-                , ostreamMux
-                , processHandle
-                , &localPrintMutex
-                , 0
-                , FALSE
-                , DUPLICATE_SAME_ACCESS))
-            {
-                LOGGER_THIS_LOG_INFO() << "Mutex NO duplicado: " << GetLastError();
-                return false;
-            }
-        }
-        if (!localPrintMutex)
-        {
-            LOGGER_THIS_LOG_INFO() << "Mutex NO valido";
-            return false;
-        }
-
-        DWORD waitResult = WaitForSingleObject(localPrintMutex, MUX_TIMEOUT);
-        if (waitResult != WAIT_OBJECT_0)
-        {
-            if (waitResult == WAIT_TIMEOUT) LOGGER_THIS_LOG_INFO() << "TIMEOUT esperando mutex";
-            else                            LOGGER_THIS_LOG_INFO() << "ERROR esperando mutex: " << GetLastError();
-            return false;
-        }
-
-        // Limitamos el tamano del texto
-        std::string shortenedText(message.text, 0, LOGGER_PRINT_LIMIT_SIZE);
-
-        // Printamos el mensaje
-        for (size_t idx = 0; idx < shortenedText.size(); idx += LOGGER_PRINT_BUFFER_SIZE)
-        {
-            std::cout << std::string(shortenedText, idx, LOGGER_PRINT_BUFFER_SIZE);
-        }
-        std::cout << std::endl;
         
-        ReleaseMutex(localPrintMutex);
-        CloseHandle(localPrintMutex);
-        return true;
-    }
+        //----------------//
+        // Final virtual  //
+        //----------------//
+
+        bool ConsoleLogger::validateStream(const LogMsg & message)
+        {
+            return true;
+        }
+
+        bool ConsoleLogger::processPrintToStream(const std::string &message)
+        {
+            // Printamos el mensaje
+            for (size_t idx = 0; idx < message.size(); idx += LOGGER_PRINT_BUFFER_SIZE)
+            {
+                std::cout << std::string(message, idx, LOGGER_PRINT_BUFFER_SIZE);
+            }
+            std::cout << std::endl;
+            
+            return true;
+        }
+    
+        //--------------------//
+        // Funciones de clase //
+        //--------------------//
+
+        SharedLogger ConsoleLogger::getInstance(const SharedLogger &logger)
+        {
+            std::lock_guard<std::mutex> lock(instanceMux);
+            if (!consoleLogger) consoleLogger.reset(new ConsoleLogger(logger));
+            return consoleLogger;
+        }
+
+        //--------------------//
+        // Variables de clase //
+        //--------------------//
+
+        SharedLogger ConsoleLogger::consoleLogger;
+        std::mutex   ConsoleLogger::instanceMux;
+    };
 };
