@@ -6,7 +6,7 @@ set(MAIN_APP_NAME     "CppExceptions")
 set(ANALYSIS_APP_NAME "CppExceptionsAnalysis")
 
 # Configuramos el nombre del proyecto y su version
-project(${MAIN_APP_NAME} VERSION 0.6)
+project(${MAIN_APP_NAME} VERSION 0.7)
 
 # Configuramos los defines
 if (EXTERNALIZE_DUMPS_DEFINE)
