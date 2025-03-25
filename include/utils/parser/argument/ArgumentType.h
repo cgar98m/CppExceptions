@@ -10,9 +10,10 @@ namespace Utils
         // Tipos de argumentos  //
         //////////////////////////
         
-        enum ArgumentType
+        enum ArgumentType: DWORD
         {
-            SOLO_ARGUMENT = 0,
+            UNDEFINED_ARGUMENT = 0,
+            SOLO_ARGUMENT,
             INTEGER_ARGUMENT,
             STRING_ARGUMENT
         };

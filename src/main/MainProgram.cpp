@@ -1,17 +1,15 @@
 #include "main/MainProgram.h"
 
 #include <windows.h>
-#include <algorithm>
-#include <iomanip>
 #include <stdexcept>
 #include "Config.h"
 #include "Version.h"
 #include "main/exception/CppExceptionThread.h"
 #include "main/exception/SehExceptionThread.h"
 #include "utils/exception/ExceptionManager.h"
+#include "utils/logging/LogEntry.h"
+#include "utils/parser/argument/ArgumentManager.h"
 #include "utils/thread/ThreadHolder.h"
-#include "utils/parser/argument/IntArgumentValue.h"
-#include "utils/parser/argument/StringArgumentValue.h"
 
 namespace Main
 {
@@ -19,211 +17,166 @@ namespace Main
     // Programa principal //
     ////////////////////////
 
-    const char *MainProgram::ARG_ERROR_MODE     = "ErrorTest";
-    const char *MainProgram::ARG_IDENTIFIER     = "Identifier";
-    const char *MainProgram::DEFAULT_IDENTIFIER = "MainProgram";
+    //------------//
+    // Constantes //
+    //------------//
 
-    const MainProgram::ArgList MainProgram::ARG_LIST =
+    const char                        *MainProgram::WORK_MODE_ARG          = "WorkMode";
+    const Utils::Parser::ArgumentType MainProgram::WORK_MODE_TYPE          = Utils::Parser::ArgumentType::INTEGER_ARGUMENT;
+    const WorkMode::Mode              MainProgram::WORK_MODE_DEFAULT_VALUE = WorkMode::Mode::UNDEFINED;
+    const bool                        MainProgram::WORK_MODE_REQUIRED      = false;
+    
+    const char                        *MainProgram::IDENTIFIER_ARG           = "Identifier";
+    const Utils::Parser::ArgumentType MainProgram::IDENTIFIER_MODE_TYPE      = Utils::Parser::ArgumentType::STRING_ARGUMENT;
+    const char                        *MainProgram::IDENTIFIER_DEFAULT_VALUE = "MainProgram";
+    const bool                        MainProgram::IDENTIFIER_REQUIRED       = false;
+
+    const RequiredArguments MainProgram::REQUIRED_ARGS =
     {
-        { Utils::Parser::ArgumentTag(Utils::Parser::ArgumentType::INTEGER_ARGUMENT, MainProgram::ARG_ERROR_MODE), false },
-        { Utils::Parser::ArgumentTag(Utils::Parser::ArgumentType::STRING_ARGUMENT,  MainProgram::ARG_IDENTIFIER), false }
+        { { MainProgram::WORK_MODE_TYPE,       MainProgram::WORK_MODE_ARG  }, MainProgram::WORK_MODE_REQUIRED  },
+        { { MainProgram::IDENTIFIER_MODE_TYPE, MainProgram::IDENTIFIER_ARG }, MainProgram::IDENTIFIER_REQUIRED }
     };
 
-    MainProgram::MainProgram(const SharedLogger& logger)
+    //------------------------//
+    // Constructor/Destructor //
+    //------------------------//
+
+    MainProgram::MainProgram(const SharedLogger &logger)
         : Utils::Logging::LoggerHolder(logger)
-        , workMode(WorkMode::UNDEFINED)
     {
     }
+    
+    //--------------------//
+    // Funciones miembro  //
+    //--------------------//
 
-    Utils::ExitCode MainProgram::run(int argc, char **argv)
+    Utils::ExitCode MainProgram::run(int totalArgs, char **args)
     {
-        // Limpiamos el objeto
-        clear();
-
         // Mostramos la versión
-        notifyVersion();
+        Core::Version::notifyVersion(THIS_LOGGER());
 
         // Procesamos los argumentos
-        parseArguments(argc, argv);
+        if (!this->analyzeArguments(totalArgs, args)) return Utils::ExitCode::EXIT_CODE_KO;
 
         // Ejecutamos el programa
-        return work();
+        return this->work();
     }
 
-    // Previa a la ejecucion del programa
-    void MainProgram::clear()
+    bool MainProgram::analyzeArguments(int totalArgs, char **args)
     {
-        workMode = WorkMode::UNDEFINED;
-    }
-
-    void MainProgram::notifyVersion()
-    {
-        // Mostramos la versión
-        LOGGER_THIS_LOG_INFO() << "VERSION: "
-                          << std::setfill('0') << std::setw(2) << VERSION_MAJOR << "."
-                          << std::setfill('0') << std::setw(2) << VERSION_MINOR;
-    }
-
-    void MainProgram::parseArguments(int argc, char **argv)
-    {
-        // Obtenemos los argumentos del programa
-        ArgumentTags argHeaders;
-        for (auto itArgHeader = ARG_LIST.begin(); itArgHeader != ARG_LIST.end(); ++itArgHeader)
+        // Parseamos los argumentos
+        Utils::Parser::ArgumentManager argManager(REQUIRED_ARGS);
+        argManager.parseArguments(totalArgs, args);
+        if (!argManager.minimumArgsAvailable())
         {
-            argHeaders.push_back(itArgHeader->argument);
+            LOGGER_THIS_LOG_ERROR() << "Parametros especificados incompletos";
+            return false;
         }
 
-        Utils::Parser::NamedArgumentParser argParser(argHeaders);
-        argParser.feedArgs(argc, argv);
-
-        // Analizamos los argumentos
-        bool requiredError = false;
-        for (auto itArg = ARG_LIST.begin(); itArg != ARG_LIST.end() && !requiredError; ++itArg)
+        // Analizamos los argumentos parseados
+        bool requiredArgsPresent = true;
+        for (auto itArg = REQUIRED_ARGS.begin(); itArg != REQUIRED_ARGS.end(); ++itArg)
         {
-            // Identificamos el argumento
-            ArgValue argValue = argParser.getArgValue(itArg->argument);
-            if (!argValue)
-            {
-                LOGGER_THIS_LOG_INFO() << "Argumento " << itArg->argument.getName() << ": NO identificado";
-                if (itArg->required) requiredError = true;
-                continue;
-            }
-            
-            // Verificamos el tipo del argumento
-            if (argValue->getType() != itArg->argument.getType())
-            {
-                LOGGER_THIS_LOG_INFO() << "Argumento " << itArg->argument.getName() << ": Tipo INVALIDO";
-                if (itArg->required) requiredError = true;
-                continue;
-            }
+            // Verificamos si tiene contenido
+            std::string argName = itArg->argument.getName();
+            if (argName.empty()) continue;
 
+            // Gestionamos el argumento segun su tipo
+            bool argError = false;
             switch (itArg->argument.getType())
             {
-                case Utils::Parser::SOLO_ARGUMENT:
-                    break;
-
-                case Utils::Parser::INTEGER_ARGUMENT:
-                    if (!dynamic_cast<Utils::Parser::IntArgumentValue*>(argValue.get()))
-                    {
-                        LOGGER_THIS_LOG_INFO() << "Argumento " << itArg->argument.getName() << ": Tipo entero NO COHERENTE";
-                        if (itArg->required) requiredError = true;
-                        continue;
-                    }
-                    break;
-
-                case Utils::Parser::STRING_ARGUMENT:
-                    if (!dynamic_cast<Utils::Parser::StringArgumentValue*>(argValue.get()))
-                    {
-                        LOGGER_THIS_LOG_INFO() << "Argumento " << itArg->argument.getName() << ": Tipo string NO COHERENTE";
-                        if (itArg->required) requiredError = true;
-                        continue;
-                    }
-                    break;
-
-                default:
-                    if (itArg->required) requiredError = true;
-                    continue;
-            }
-
-            // Procesamos el argumento
-            if (!analyzeArgument(itArg->argument.getName(), argValue) && itArg->required) requiredError = true;
-        }
-
-        // Notificamos el valor parseado
-        if (requiredError) workMode = WorkMode::UNDEFINED;
-        LOGGER_THIS_LOG_INFO() << "Modo de trabajo: " << static_cast<uint32_t>(workMode) << " - " << getWorkModeDescription(workMode);
-    }
-
-    bool MainProgram::analyzeArgument(std::string name, ArgValue argument)
-    {
-        if (!argument) return false;
-
-        if (name == ARG_ERROR_MODE)
-        {
-            Utils::Parser::IntArgumentValue* intArg = dynamic_cast<Utils::Parser::IntArgumentValue*>(argument.get());
-            if (intArg)
-            {
-                switch (intArg->getValue())
+                case Utils::Parser::ArgumentType::SOLO_ARGUMENT:
                 {
-                    case 0:
-                        return true;
-    
-                    case 1:
-                        workMode = WorkMode::THROW_CCP_EXCEPTION;
-                        return true;
-    
-                    case 2:
-                        workMode = WorkMode::THROW_SEH_EXCEPTION;
-                        return true;
-    
-                    case 3:
-                        workMode = WorkMode::THROW_THREADED_CPP_EXCEPTION;
-                        return true;
-    
-                    case 4:
-                        workMode = WorkMode::THROW_THREADED_SEH_EXCEPTION;
-                        return true;
-    
-                    default:
-                        LOGGER_THIS_LOG_INFO() << "Argumento " << name << ": Valor NO esperado";
-                        return false;
+                    break;
+                }
+                
+                case Utils::Parser::ArgumentType::INTEGER_ARGUMENT:
+                {
+                    int argValue = 0;
+
+                    // Gestionamos el modo de trabajo
+                    if (argName == WORK_MODE_ARG)
+                    {
+                        if (argManager.existsIntArgument(argName, argValue)) this->workMode = static_cast<WorkMode::Mode>(argValue);
+                        else                                                 argError = true;
+                    }
+                    break;
+                }
+                
+                case Utils::Parser::ArgumentType::STRING_ARGUMENT:
+                {
+                    std::string argValue;
+                    
+                    // Gestionamos el modo de trabajo
+                    if (argName == IDENTIFIER_ARG)
+                    {
+                        if (argManager.existsStringArgument(argName, argValue)) this->identifier = argValue;
+                        else                                                    argError = true;
+                    }
+                    break;
+                }
+                
+                default:
+                {
+                    LOGGER_THIS_LOG_WARNING() << "Argumento " << argName << " de tipo desconocido";
+                    break;
                 }
             }
-        }
-        else if (name == ARG_IDENTIFIER)
-        {
-            Utils::Parser::StringArgumentValue* stringArg = dynamic_cast<Utils::Parser::StringArgumentValue*>(argument.get());
-            if (stringArg) identifier = stringArg->getValue();
-            return true;
+
+            // Gestionamos el error
+            if (argError && itArg->required)
+            {
+                LOGGER_THIS_LOG_ERROR() << "ERROR procesando argumento " << argName;
+                requiredArgsPresent = false;
+            }
         }
 
-        return false;
+        return requiredArgsPresent;
     }
 
-    // Logica del programa
     Utils::ExitCode MainProgram::work()
     {
         // Iniciamos la ejecucion
-        LOGGER_THIS_LOG_INFO() << "Inicio de la ejecucion";
+        LOGGER_THIS_LOG_INFO() << "Inicio de la ejecucion: Modo de trabajo: " << static_cast<DWORD>(this->workMode) << " Identificador: " << this->identifier;
         
         // Instanciamos el gestor de errores
-        Utils::Exception::ExceptionManager exceptionManager(true, Utils::Exception::ExceptionManager::Params{CONFIG_EXTERNALIZE_DUMPS, THIS_LOGGER(), identifier});
+        Utils::Exception::ExceptionManager exceptionManager(true, Utils::Exception::ExceptionManager::Params{CONFIG_EXTERNALIZE_DUMPS, THIS_LOGGER(), this->identifier});
 
         // Gestionamos el modo de trabajo
-        switch (workMode)
+        switch (this->workMode)
         {
-            case WorkMode::UNDEFINED:
+            case WorkMode::Mode::UNDEFINED:
             {
                 break;
             }
             
-            case WorkMode::THROW_CCP_EXCEPTION:
+            case WorkMode::Mode::THROW_CCP_EXCEPTION:
             {
                 throw std::runtime_error("C++ Exception");
                 break;
             }
             
-            case WorkMode::THROW_SEH_EXCEPTION:
+            case WorkMode::Mode::THROW_SEH_EXCEPTION:
             {
                 int *p = nullptr;
                 *p = 20;
                 break;
             }
             
-            case WorkMode::THROW_THREADED_CPP_EXCEPTION:
+            case WorkMode::Mode::THROW_THREADED_CPP_EXCEPTION:
             {
-                Main::Exception::CppExceptionThread cppThread;
-                Utils::Thread::ThreadHolder cppHolder(cppThread, Utils::Thread::ThreadHolder::Params(), THIS_LOGGER());
+                Exception::CppExceptionThread cppThread;
+                Utils::Thread::ThreadHolder   cppHolder(cppThread, Utils::Thread::ThreadHolder::Params(), THIS_LOGGER());
                 cppHolder.run();
                 Sleep(1000);
                 cppHolder.stop();
                 break;
             }
             
-            case WorkMode::THROW_THREADED_SEH_EXCEPTION:
+            case WorkMode::Mode::THROW_THREADED_SEH_EXCEPTION:
             {
-                Main::Exception::SehExceptionThread sehThread;
-                Utils::Thread::ThreadHolder sehHolder(sehThread, Utils::Thread::ThreadHolder::Params(), THIS_LOGGER());
+                Exception::SehExceptionThread sehThread;
+                Utils::Thread::ThreadHolder   sehHolder(sehThread, Utils::Thread::ThreadHolder::Params(), THIS_LOGGER());
                 sehHolder.run();
                 Sleep(1000);
                 sehHolder.stop();
@@ -231,24 +184,8 @@ namespace Main
             }
         }
         
-        // FInalizamos
+        // Finalizamos
         LOGGER_THIS_LOG_INFO() << "Fin de la ejecucion";
-
-        // Dmaos tiempo a terminar de escribir los logs
         return Utils::ExitCode::EXIT_CODE_OK;
-    }
-
-    // Utils
-    std::string MainProgram::getWorkModeDescription(WorkMode workMode)
-    {
-        switch (workMode)
-        {
-            case WorkMode::UNDEFINED:                    return "Sin definir";
-            case WorkMode::THROW_CCP_EXCEPTION:          return "Lanzamiento de excepcion C++";
-            case WorkMode::THROW_SEH_EXCEPTION:          return "Lanzamiento de excepcion SEH";
-            case WorkMode::THROW_THREADED_CPP_EXCEPTION: return "Lanzamiento de excepcion C++ en un thread";
-            case WorkMode::THROW_THREADED_SEH_EXCEPTION: return "Lanzamiento de excepcion SEH en un thread";
-            default:                                     return "N/A";
-        }
     }
 };

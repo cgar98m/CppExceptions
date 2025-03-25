@@ -17,7 +17,7 @@ namespace Utils
         {
             // Constructor/Destructor
             public:
-                explicit ArgumentTag(ArgumentType argType, const std::string &argName = std::string());
+                ArgumentTag(ArgumentType argType = ArgumentType::UNDEFINED_ARGUMENT, const std::string &argName = std::string());
                 virtual ~ArgumentTag() = default;
 
             // Funciones miembro

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <map>
+#include <memory>
 #include <mutex>
 #include <utility>
 #include "utils/parser/argument/ArgumentTag.h"
@@ -48,3 +49,9 @@ namespace Utils
         };
     };
 };
+
+////////////////////////////////
+// Tipos, estructuras y enums //
+////////////////////////////////
+
+using UniqueNamedArgumentParser = std::unique_ptr<Utils::Parser::NamedArgumentParser>;

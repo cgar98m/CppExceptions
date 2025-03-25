@@ -6,7 +6,7 @@ set(MAIN_APP_NAME     "CppExceptions")
 set(ANALYSIS_APP_NAME "CppExceptionsAnalysis")
 
 # Configuramos el nombre del proyecto y su version
-project(${MAIN_APP_NAME} VERSION 0.7)
+project(${MAIN_APP_NAME} VERSION 0.8)
 
 # Configuramos los defines
 if (EXTERNALIZE_DUMPS_DEFINE)
@@ -29,6 +29,7 @@ message(STATUS "CXX_FLAGS: ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}"
 
 # Creamos una lista con los componentes comunes
 set(COMMON_SRC
+    "${PROJECT_SOURCE_DIR}/src/Version.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/exception/ExceptionManager.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/exception/ipc/ExceptionPointers.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/exception/ipc/ExceptionRecord.cpp"
@@ -47,6 +48,7 @@ set(COMMON_SRC
     "${PROJECT_SOURCE_DIR}/src/utils/logging/LogEntry.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/logging/LoggerHolder.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/logging/LogLevel.cpp"
+    "${PROJECT_SOURCE_DIR}/src/utils/parser/argument/ArgumentManager.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/parser/argument/ArgumentTag.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/parser/argument/ArgumentTypeHolder.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/parser/argument/IntArgumentValue.cpp"
@@ -62,6 +64,7 @@ set(COMMON_SRC
 add_executable(${MAIN_APP_NAME}
     "${PROJECT_SOURCE_DIR}/src/CppExceptions.cpp"
     "${PROJECT_SOURCE_DIR}/src/main/MainProgram.cpp"
+    "${PROJECT_SOURCE_DIR}/src/main/WorkMode.cpp"
     "${PROJECT_SOURCE_DIR}/src/main/exception/CppExceptionThread.cpp"
     "${PROJECT_SOURCE_DIR}/src/main/exception/SehExceptionThread.cpp"
     ${COMMON_SRC})

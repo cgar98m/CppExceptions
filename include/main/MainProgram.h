@@ -1,67 +1,57 @@
 #pragma once
 
-#include <windows.h>
-#include <exception>
-#include <functional>
+#include <string>
+#include "main/WorkMode.h"
 #include "utils/ExitCode.h"
 #include "utils/logging/BasicLogger.h"
 #include "utils/logging/ILogger.h"
 #include "utils/logging/LoggerHolder.h"
-#include "utils/parser/argument/ArgumentTag.h"
-#include "utils/parser/argument/NamedArgumentParser.h"
+#include "utils/parser/argument/ArgumentType.h"
+#include "utils/parser/argument/RequiredArgument.h"
 
 namespace Main
 {
-    // Wrapper del programa principal
+    ////////////////////////////////////
+    // Wrapper del programa principal //
+    ////////////////////////////////////
+
     class MainProgram: public Utils::Logging::LoggerHolder
     {
+        // Constantes
         private:
-            struct RequiredArgument
-            {
-                Utils::Parser::ArgumentTag argument;
-                bool                       required;
-            };
+            static const char                        *WORK_MODE_ARG;
+            static const Utils::Parser::ArgumentType WORK_MODE_TYPE;
+            static const WorkMode::Mode              WORK_MODE_DEFAULT_VALUE;
+            static const bool                        WORK_MODE_REQUIRED;
 
-            enum class WorkMode : uint32_t
-            {
-                UNDEFINED = 0,
-                THROW_CCP_EXCEPTION,
-                THROW_SEH_EXCEPTION,
-                THROW_THREADED_CPP_EXCEPTION,
-                THROW_THREADED_SEH_EXCEPTION
-            };
+            static const char                        *IDENTIFIER_ARG;
+            static const Utils::Parser::ArgumentType IDENTIFIER_MODE_TYPE;
+            static const char                        *IDENTIFIER_DEFAULT_VALUE;
+            static const bool                        IDENTIFIER_REQUIRED;
 
-            using ArgList  = std::vector<RequiredArgument>;
-            using ArgValue = Utils::Parser::NamedArgumentParser::NamedArgumentValue;
-            
-            static const char *ARG_ERROR_MODE;
-            static const char *ARG_IDENTIFIER;
-            static const char *DEFAULT_IDENTIFIER;
+            static const RequiredArguments REQUIRED_ARGS;
 
-            static const ArgList ARG_LIST;
-
-            WorkMode    workMode;
-            std::string identifier = DEFAULT_IDENTIFIER;
-
+        // Constructor/Destructor
         public:
-            explicit MainProgram(const SharedLogger& logger = BASIC_LOGGER());
-            MainProgram(const MainProgram&) = delete;
-            MainProgram& operator=(const MainProgram&) = delete;
+            MainProgram(const SharedLogger &logger = BASIC_LOGGER());
             virtual ~MainProgram() = default;
-
-            Utils::ExitCode run(int argc, char **argv);
         
-        private:
-            // Previa a la ejecucion del programa
-            void clear();
-            void notifyVersion();
-            void parseArguments(int argc, char **argv);
-            bool analyzeArgument(std::string name, ArgValue argument);
+        // Deleted
+        public:
+            MainProgram(const MainProgram&)            = delete;
+            MainProgram &operator=(const MainProgram&) = delete;
 
-            // Logica del programa
+        // Funciones miembro
+        public:
+            Utils::ExitCode run(int totalArgs, char **args);
+
+        private:
+            bool analyzeArguments(int totalArgs, char **args);
             Utils::ExitCode work();
 
-            // Utils
-            std::string getWorkModeDescription(WorkMode workMode);
+        // Variables miembro
+        private:
+            WorkMode::Mode workMode   = WorkMode::Mode::UNDEFINED;
+            std::string    identifier = IDENTIFIER_DEFAULT_VALUE;
     };
 };

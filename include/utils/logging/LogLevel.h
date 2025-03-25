@@ -24,7 +24,7 @@ namespace Utils
 
             // Tipos, estructuras y enums
             public:
-                enum class Level : BYTE
+                enum class Level: BYTE
                 {
                     LEVEL_ERROR = 0,
                     LEVEL_WARNING,
