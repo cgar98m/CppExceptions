@@ -20,6 +20,8 @@ namespace Utils
         // Constantes //
         //------------//
 
+        const char *IpcExceptionManager::EXTERNAL_IDENTIFIER_PARAM = "ExternalIdentifier";
+
         const char *IpcExceptionManager::MANAGER_NAME             = "IpcExceptionManager";
         const char *IpcExceptionManager::MANAGER_EVENT_START_NAME = "EventStart";
         const char *IpcExceptionManager::MANAGER_EVENT_END_NAME   = "EventEnd";
@@ -248,6 +250,11 @@ namespace Utils
         {
             return FileSystem::FileTools::getExecutablePath() + std::string(NAME_ANALYSIS_APP) + ".exe";
         }
+
+        std::string IpcExceptionManager::getAnalysisProcessParams() const
+        {
+            return std::string(EXTERNAL_IDENTIFIER_PARAM) + std::string(" ") + std::string(this->analysisAppTag);
+        }
         
         bool IpcExceptionManager::createEventHandles()
         {
@@ -314,17 +321,19 @@ namespace Utils
             ZeroMemory(&startInfo, sizeof(STARTUPINFO));
             ZeroMemory(&processInfo, sizeof(PROCESS_INFORMATION));
 
-            std::string externalAppPath = this->getAnalysisProcessPath();
-            if (!CreateProcess(externalAppPath.c_str()
-                            , nullptr
-                            , nullptr
-                            , nullptr
-                            , TRUE
-                            , 0
-                            , nullptr
-                            , nullptr
-                            , &startInfo
-                            , &processInfo))
+            std::string cmdCommand = this->getAnalysisProcessPath() + " " + this->getAnalysisProcessParams();
+            std::vector<char> charCmdCommand(cmdCommand.begin(), cmdCommand.end());
+            charCmdCommand.push_back(0);
+            if (!CreateProcess(nullptr
+                , charCmdCommand.data()
+                , nullptr
+                , nullptr
+                , TRUE
+                , 0
+                , nullptr
+                , nullptr
+                , &startInfo
+                , &processInfo))
             {
                 LOGGER_THIS_LOG_ERROR() << "ERROR lanzando proceso de analisis externo " << NAME_ANALYSIS_APP << ": " << GetLastError();
                 return false;

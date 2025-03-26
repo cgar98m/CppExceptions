@@ -21,6 +21,9 @@ namespace Utils
         class IpcExceptionManager: public Logging::LoggerHolder
         {
             // Constantes
+            public:
+                static const char *EXTERNAL_IDENTIFIER_PARAM;
+
             private:
                 static const char *MANAGER_NAME;
                 static const char *MANAGER_EVENT_START_NAME;
@@ -52,7 +55,9 @@ namespace Utils
                 std::string getStartOfAnalysysHandleName() const;
                 std::string getEndOfAnalysysHandleName() const;
                 std::string getCloseAnalysysHandleName() const;
+                
                 std::string getAnalysisProcessPath() const;
+                std::string getAnalysisProcessParams() const;
 
                 bool createEventHandles();
                 bool createAnalysisProcess();

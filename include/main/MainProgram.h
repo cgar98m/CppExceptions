@@ -47,7 +47,7 @@ namespace Main
 
         private:
             bool analyzeArguments(int totalArgs, char **args);
-            Utils::ExitCode work();
+            Utils::ExitCode work(bool requisitesMet);
 
         // Variables miembro
         private:

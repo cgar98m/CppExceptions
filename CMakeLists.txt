@@ -6,7 +6,7 @@ set(MAIN_APP_NAME     "CppExceptions")
 set(ANALYSIS_APP_NAME "CppExceptionsAnalysis")
 
 # Configuramos el nombre del proyecto y su version
-project(${MAIN_APP_NAME} VERSION 0.8)
+project(${MAIN_APP_NAME} VERSION 1.0)
 
 # Configuramos los defines
 if (EXTERNALIZE_DUMPS_DEFINE)
@@ -74,6 +74,7 @@ target_link_libraries(${MAIN_APP_NAME} PUBLIC dbghelp)
 # Creamos el ejecutable secundario
 add_executable(${ANALYSIS_APP_NAME}
     "${PROJECT_SOURCE_DIR}/src/CppExceptionsAnalysis.cpp"
+    "${PROJECT_SOURCE_DIR}/src/analysis/AnalysisProgram.cpp"
     ${COMMON_SRC})
 target_include_directories(${ANALYSIS_APP_NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include/")
 target_link_libraries(${ANALYSIS_APP_NAME} PUBLIC dbghelp)

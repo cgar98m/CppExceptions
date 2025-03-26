@@ -55,17 +55,14 @@ namespace Main
         // Mostramos la versión
         Core::Version::notifyVersion(THIS_LOGGER());
 
-        // Procesamos los argumentos
-        if (!this->analyzeArguments(totalArgs, args)) return Utils::ExitCode::EXIT_CODE_KO;
-
-        // Ejecutamos el programa
-        return this->work();
+        // Procesamos los argumentos y ejecutamos el programa
+        return this->work(this->analyzeArguments(totalArgs, args));
     }
 
     bool MainProgram::analyzeArguments(int totalArgs, char **args)
     {
         // Parseamos los argumentos
-        Utils::Parser::ArgumentManager argManager(REQUIRED_ARGS);
+        Utils::Parser::ArgumentManager argManager(REQUIRED_ARGS, THIS_LOGGER());
         argManager.parseArguments(totalArgs, args);
         if (!argManager.minimumArgsAvailable())
         {
@@ -107,7 +104,7 @@ namespace Main
                 {
                     std::string argValue;
                     
-                    // Gestionamos el modo de trabajo
+                    // Gestionamos el identificador
                     if (argName == IDENTIFIER_ARG)
                     {
                         if (argManager.existsStringArgument(argName, argValue)) this->identifier = argValue;
@@ -134,13 +131,20 @@ namespace Main
         return requiredArgsPresent;
     }
 
-    Utils::ExitCode MainProgram::work()
+    Utils::ExitCode MainProgram::work(bool requisitesMet)
     {
         // Iniciamos la ejecucion
         LOGGER_THIS_LOG_INFO() << "Inicio de la ejecucion: Modo de trabajo: " << static_cast<DWORD>(this->workMode) << " Identificador: " << this->identifier;
         
-        // Instanciamos el gestor de errores
+        // Sobreescribimos el comportamiento de las excepciones y salida del programa
         Utils::Exception::ExceptionManager exceptionManager(true, Utils::Exception::ExceptionManager::Params{CONFIG_EXTERNALIZE_DUMPS, THIS_LOGGER(), this->identifier});
+        
+        // Verificamos si podemos ejecutar el programa
+        if (!requisitesMet)
+        {
+            LOGGER_THIS_LOG_ERROR() << "No se puede ejecutar el programa";
+            return Utils::ExitCode::EXIT_CODE_NOT_AVAILABLE;
+        }
 
         // Gestionamos el modo de trabajo
         switch (this->workMode)
