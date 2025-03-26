@@ -3,7 +3,7 @@
 #include <windows.h>
 #include <dbghelp.h>
 #include <string>
-#include "utils/exception/minidump/MiniDumpInfo.h"
+#include "utils/exception/RequiredExceptionInfo.h"
 #include "utils/logging/BasicLogger.h"
 #include "utils/logging/ILogger.h"
 
@@ -20,7 +20,9 @@ namespace Utils
             // Constantes
             public:
                 static const char *MINI_DUMP_DLL_NAME;
-                static const char *MINI_DUMP_FUNC_MINIDUMP;
+
+                static const char *MINI_DUMP_FUNC_MINIDUMPWRITEDUMP;
+                
                 static const char *MINI_DUMP_DUMP_FILE_NAME;
 
             // Tipos, estructuras y enums
@@ -35,7 +37,7 @@ namespace Utils
 
             // Funciones de clase
             public:
-                static bool createDumpFile(const MiniDumpInfo& dumpInfo, const SharedLogger &logger = BASIC_LOGGER());
+                static bool createDumpFile(const RequiredExceptionInfo &dumpInfo, const SharedLogger &logger = BASIC_LOGGER());
             
             private:
                 static std::string getDumpFileName();

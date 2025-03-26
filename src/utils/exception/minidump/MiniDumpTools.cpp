@@ -5,7 +5,7 @@
 #include <sstream>
 #include "utils/filesystem/FileTools.h"
 #include "utils/library/DllManager.h"
-#include "utils/library/DllObject.h"
+#include "utils/library/DllObject.hpp"
 #include "utils/logging/LogEntry.h"
 
 namespace Utils
@@ -20,15 +20,17 @@ namespace Utils
         // Constantes //
         //------------//
 
-        const char *MiniDumpTools::MINI_DUMP_DLL_NAME       = "dbghelp.dll";
-        const char *MiniDumpTools::MINI_DUMP_FUNC_MINIDUMP  = "MiniDumpWriteDump";
+        const char *MiniDumpTools::MINI_DUMP_DLL_NAME = "dbghelp.dll";
+
+        const char *MiniDumpTools::MINI_DUMP_FUNC_MINIDUMPWRITEDUMP = "MiniDumpWriteDump";
+
         const char *MiniDumpTools::MINI_DUMP_DUMP_FILE_NAME = "crashdump.dmp";
 
         //--------------------//
         // Funciones de clase //
         //--------------------//
 
-        bool MiniDumpTools::createDumpFile(const MiniDumpInfo& dumpInfo, const SharedLogger &logger)
+        bool MiniDumpTools::createDumpFile(const RequiredExceptionInfo &dumpInfo, const SharedLogger &logger)
         {
             // Verificamos los datos obtenidos
             if (!dumpInfo.isValid())
@@ -44,19 +46,16 @@ namespace Utils
                 LOGGER_LOG_ERROR(logger) << "ERROR cargando libreria " << MINI_DUMP_DLL_NAME;
                 return false;
             }
+
+            // Bloqueamos el uso de la DLL
+            std::lock_guard<std::mutex> dllUsageLock(dllWrapper->getUsageMutex());
     
             // Obtenemos la funcion de interes
-            SharedDllFunction funcWrapper = dllWrapper->getFunction(MINI_DUMP_FUNC_MINIDUMP);
-            if (!funcWrapper || !funcWrapper->isValid())
+            SharedDllFunction funcWrapper;
+            MiniDumpWriteDump funcAddress = dllWrapper->getCastedFunction<MiniDumpWriteDump>(MINI_DUMP_FUNC_MINIDUMPWRITEDUMP, funcWrapper);
+            if (!funcAddress || !funcWrapper)
             {
-                LOGGER_LOG_ERROR(logger) << "ERROR cargando funcion " << MINI_DUMP_FUNC_MINIDUMP;
-                return false;
-            }
-    
-            MiniDumpWriteDump funcAddress = reinterpret_cast<MiniDumpWriteDump>(funcWrapper->getAddress());
-            if (!funcAddress)
-            {
-                LOGGER_LOG_ERROR(logger) << "ERROR traduciendo funcion " << MINI_DUMP_FUNC_MINIDUMP;
+                LOGGER_LOG_ERROR(logger) << "ERROR obteniendo funcion " << MINI_DUMP_FUNC_MINIDUMPWRITEDUMP;
                 return false;
             }
             
@@ -100,9 +99,6 @@ namespace Utils
     
             // Cerramos el fichero
             CloseHandle(handleFichero);
-    
-            // Descargamos la DLL y terminamos
-            Library::DllManager::deleteInstance(MINI_DUMP_DLL_NAME);
             return resultado;
         }
 

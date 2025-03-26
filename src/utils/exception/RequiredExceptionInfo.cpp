@@ -1,4 +1,4 @@
-#include "utils/exception/minidump/MiniDumpInfo.h"
+#include "utils/exception/RequiredExceptionInfo.h"
 
 namespace Utils
 {
@@ -12,9 +12,14 @@ namespace Utils
         // Funciones miembro  //
         //--------------------//
 
-        bool MiniDumpInfo::isValid() const
+        bool RequiredExceptionInfo::isValid() const
         {
-            return process && processId && threadId;
+            return process && processId && threadId && exception;
+        }
+
+        bool RequiredExceptionInfo::isFullyValid() const
+        {
+            return process && processId && thread && threadId && exception;
         }
     };
 };

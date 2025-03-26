@@ -6,7 +6,7 @@ set(MAIN_APP_NAME     "CppExceptions")
 set(ANALYSIS_APP_NAME "CppExceptionsAnalysis")
 
 # Configuramos el nombre del proyecto y su version
-project(${MAIN_APP_NAME} VERSION 1.0)
+project(${MAIN_APP_NAME} VERSION 1.1)
 
 # Configuramos los defines
 if (EXTERNALIZE_DUMPS_DEFINE)
@@ -31,15 +31,15 @@ message(STATUS "CXX_FLAGS: ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}"
 set(COMMON_SRC
     "${PROJECT_SOURCE_DIR}/src/Version.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/exception/ExceptionManager.cpp"
+    "${PROJECT_SOURCE_DIR}/src/utils/exception/RequiredExceptionInfo.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/exception/ipc/ExceptionPointers.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/exception/ipc/ExceptionRecord.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/exception/ipc/IpcExceptionManager.cpp"
-    "${PROJECT_SOURCE_DIR}/src/utils/exception/minidump/MiniDumpInfo.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/exception/minidump/MiniDumpTools.cpp"
+    "${PROJECT_SOURCE_DIR}/src/utils/exception/stackwalk/StackWalkManager.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/filesystem/FileTools.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/library/DllFunction.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/library/DllManager.cpp"
-    "${PROJECT_SOURCE_DIR}/src/utils/library/DllObject.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/logging/BasicLogger.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/logging/ConsoleLogger.cpp"
     "${PROJECT_SOURCE_DIR}/src/utils/logging/FileLogger.cpp"

@@ -34,7 +34,7 @@ namespace Utils
 
             // Constructor/Destructor
             public:
-                ExceptionManager(bool isGlobal = false, const Params& params = Params());
+                ExceptionManager(bool isGlobal = false, const Params &params = Params());
                 virtual ~ExceptionManager();
             
             // Deleted

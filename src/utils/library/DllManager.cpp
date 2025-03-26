@@ -34,17 +34,6 @@ namespace Utils
             if (!instance) return SharedDllObject();
             return instance->getModule(dllName);
         }
-    
-        bool DllManager::deleteInstance(const std::string &dllName)
-        {
-            std::lock_guard<std::mutex> lock(instanceMutex);
-    
-            // Obtenemos la instancia gestora
-            if (!instance) return true;
-    
-            // Descargamos el modulo
-            return instance->deleteModule(dllName);
-        }
 
         //--------------------//
         // Funciones miembro  //
@@ -67,23 +56,6 @@ namespace Utils
             if (!dllWrapper || !dllWrapper->isValid()) return SharedDllObject();
             this->dllList[uniqueDllName] = dllWrapper;
             return dllWrapper;
-        }
-    
-        bool DllManager::deleteModule(const std::string &dllName)
-        {
-            std::lock_guard<std::mutex> lock(this->dllMutex);
-    
-            // Verificamos la validez de la dll
-            std::string uniqueDllName = getUniqueDllName(dllName);
-            if (uniqueDllName.empty()) return true;
-    
-            // Comprobamos su existencia
-            auto dllIt = this->dllList.find(uniqueDllName);
-            if (dllIt == this->dllList.end()) return true;
-    
-            // Eliminamos el modulo
-            this->dllList.erase(dllIt);
-            return true;
         }
 
         std::string DllManager::getUniqueDllName(const std::string &dllName)

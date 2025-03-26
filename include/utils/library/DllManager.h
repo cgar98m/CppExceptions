@@ -4,7 +4,7 @@
 #include <memory>
 #include <mutex>
 #include <string>
-#include "utils/library/DllObject.h"
+#include "utils/library/DllObject.hpp"
 #include "utils/logging/BasicLogger.h"
 #include "utils/logging/ILogger.h"
 #include "utils/logging/LoggerHolder.h"
@@ -39,12 +39,10 @@ namespace Utils
             // Funciones de clase
             public:
                 static SharedDllObject getInstance(const std::string &dllName, const SharedLogger &logger = BASIC_LOGGER());
-                static bool deleteInstance(const std::string &dllName);
     
             // Funciones miembro
             private:
                 SharedDllObject getModule(const std::string &dllName);
-                bool deleteModule(const std::string &dllName);
 
                 std::string getUniqueDllName(const std::string &dllName);
 

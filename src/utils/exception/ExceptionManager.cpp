@@ -1,8 +1,9 @@
 #include "utils/exception/ExceptionManager.h"
 
 #include <cstdlib>
-#include "utils/exception/minidump/MiniDumpInfo.h"
+#include "utils/exception/RequiredExceptionInfo.h"
 #include "utils/exception/minidump/MiniDumpTools.h"
+#include "utils/exception/stackwalk/StackWalkManager.h"
 #include "utils/logging/LogEntry.h"
 #include "utils/logging/LogTypes.h"
 
@@ -24,7 +25,7 @@ namespace Utils
         // Constructor/Destructor //
         //------------------------//
 
-        ExceptionManager::ExceptionManager(bool isGlobal, const Params& params)
+        ExceptionManager::ExceptionManager(bool isGlobal, const Params &params)
             : topTerminateHandler(std::set_terminate(manageSafeTerminate))
             , topExceptionHandler(isGlobal ? SetUnhandledExceptionFilter(manageUnhandledException) : nullptr)
         {
@@ -139,10 +140,19 @@ namespace Utils
                     manageLocally = !externalExceptionManager->sendException(exception);
             }
     
-            // Generamos dump si es necesario
-            MiniDumpInfo miniDumpInfo;
-            miniDumpInfo.exception = exception;
-            if (manageLocally && !MiniDumpTools::createDumpFile(miniDumpInfo)) LOGGER_LOG_ERROR(tmpLogger) << "ERROR creando mini dump";
+            // Gestionamos la excepcion en local
+            if (manageLocally)
+            {
+                RequiredExceptionInfo exceptionInfo;
+                exceptionInfo.exception = exception;
+
+                // Generamos dump
+                if (!MiniDumpTools::createDumpFile(exceptionInfo)) LOGGER_LOG_ERROR(tmpLogger) << "ERROR creando mini dump";
+
+                // Mostramos arbol de llamadas
+                StackWalkManager stackWalk(tmpLogger);
+                stackWalk.showStackWalk(exceptionInfo);
+            }
             
             std::terminate();
             return EXCEPTION_EXECUTE_HANDLER;

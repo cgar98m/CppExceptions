@@ -3,9 +3,10 @@
 #include "Name.h"
 #include "utils/ExitCode.h"
 #include "utils/logging/LogEntry.h"
+#include "utils/exception/RequiredExceptionInfo.h"
 #include "utils/exception/ipc/ExceptionPointers.h"
-#include "utils/exception/minidump/MiniDumpInfo.h"
 #include "utils/exception/minidump/MiniDumpTools.h"
+#include "utils/exception/stackwalk/StackWalkManager.h"
 #include "utils/filesystem/FileTools.h"
 
 namespace Utils
@@ -141,7 +142,7 @@ namespace Utils
             LOGGER_THIS_LOG_INFO() << "Esperando excepcion " << this->analysisAppTag;
 
             // Esperamos al proceso principal
-            MiniDumpInfo            miniDumpInfo;
+            RequiredExceptionInfo   exceptionInfo = {};
             ExceptionPointers       exceptionPointers;
             LimitedExceptionPointer limitedExceptionPointer;
             bool exitLoop = false;
@@ -199,24 +200,34 @@ namespace Utils
 
             // Preparamos los datos de la excepcion
             exceptionPointers.contextRecord = limitedExceptionPointer.contextRecord;
-            miniDumpInfo.processId          = limitedExceptionPointer.processId;
-            miniDumpInfo.threadId           = limitedExceptionPointer.threadId;
-            miniDumpInfo.exception          = exceptionPointers();
+            exceptionInfo.processId          = limitedExceptionPointer.processId;
+            exceptionInfo.threadId           = limitedExceptionPointer.threadId;
+            exceptionInfo.exception          = exceptionPointers();
 
             // Obtenemos el handle asociado al id del proceso
             HANDLE processHandle = OpenProcess(PROCESS_ALL_ACCESS
                                              , FALSE
-                                             , miniDumpInfo.processId);
+                                             , exceptionInfo.processId);
             if (!processHandle)
             {
                 LOGGER_THIS_LOG_ERROR() << "ERROR obteniendo handle del proceso " << this->analysisAppTag;
                 return false;
             }
-            miniDumpInfo.process = processHandle;
+            exceptionInfo.process = processHandle;
+
+            // Obtenemos el handle asociado al id del thread
+            HANDLE threadHandle = OpenThread(THREAD_ALL_ACCESS
+                                           , FALSE
+                                           , exceptionInfo.threadId);
+            if (!threadHandle)
+            {
+                LOGGER_THIS_LOG_WARNING() << "ERROR obteniendo handle del thread " << this->analysisAppTag;
+            }
+            exceptionInfo.thread = threadHandle;
 
             // Gestionamos la excepcion
             bool noDumpError = true;
-            if (!MiniDumpTools::createDumpFile(miniDumpInfo, THIS_LOGGER()))
+            if (!MiniDumpTools::createDumpFile(exceptionInfo, THIS_LOGGER()))
             {
                 LOGGER_THIS_LOG_ERROR() << "ERROR generando mini dump " << this->analysisAppTag;
                 noDumpError = false;
@@ -226,7 +237,15 @@ namespace Utils
                 LOGGER_THIS_LOG_INFO() << "Excepcion " << this->analysisAppTag << " tratada exitosamente";
             }
 
+            // Mostramos el stack walk (si podemos)
+            if (threadHandle)
+            {
+                StackWalkManager stackWalk(THIS_LOGGER());
+                stackWalk.showStackWalk(exceptionInfo);
+            }
+
             // Cerramos el handle del proceso principal
+            if (threadHandle) CloseHandle(threadHandle);
             CloseHandle(processHandle);
             return noDumpError;
         }
